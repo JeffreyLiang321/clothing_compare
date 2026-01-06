@@ -2,7 +2,7 @@ const APP_ORIGIN = "http://localhost:5173";
 
 async function getAppOrigin() {
     const { appOrigin } = await chrome.storage.sync.get(["appOrigin"]);
-    return (appOrigin && String(appOrigin).trim()) || DEFAULT_APP_ORIGIN;
+    return (appOrigin && String(appOrigin).trim()) || APP_ORIGIN;
 }
   
 chrome.action.onClicked.addListener(async (tab) => {
