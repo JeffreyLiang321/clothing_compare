@@ -1,5 +1,10 @@
 const APP_ORIGIN = "http://localhost:5173";
 
+async function getAppOrigin() {
+    const { appOrigin } = await chrome.storage.sync.get(["appOrigin"]);
+    return (appOrigin && String(appOrigin).trim()) || DEFAULT_APP_ORIGIN;
+}
+  
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;
 
@@ -33,7 +38,12 @@ chrome.action.onClicked.addListener(async (tab) => {
         if (m?.[0]) price = m[0];
       }
 
-      return { url, name, store, price };
+      const image =
+      document.querySelector('meta[property="og:image"]')?.content ||
+      document.querySelector('meta[name="twitter:image"]')?.content ||
+      "";
+
+      return { url, name, store, price, image };
     }
   });
 
@@ -53,6 +63,9 @@ chrome.action.onClicked.addListener(async (tab) => {
     if (numeric) params.set("price", numeric);
   }
 
-  const addUrl = `${APP_ORIGIN}/add?${params.toString()}`;
+  if (data.image) params.set("image_url", data.image);
+
+  const appOrigin = await getAppOrigin()
+  const addUrl = `${appOrigin.replace(/\/$/, "")}/add?${params.toString()}`;
   chrome.tabs.create({ url: addUrl });
 });

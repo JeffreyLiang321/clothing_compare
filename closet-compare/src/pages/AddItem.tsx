@@ -14,6 +14,7 @@ type NewItem = {
   tags: string;
   status: "considering" | "bought" | "dropped";
   decision_reason: string;
+  image_url: string;
 };
 
 export default function AddItem() {
@@ -29,6 +30,7 @@ export default function AddItem() {
     tags: "",
     status: "considering",
     decision_reason: "",
+    image_url: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -51,12 +53,13 @@ export default function AddItem() {
     const priceParam = searchParams.get("price");
     const storeParam = searchParams.get("store");
     const tagsParam = searchParams.get("tags");
+    const imageUrlParam = searchParams.get("image_url");
 
-    console.log("Reading URL params:", { urlParam, nameParam, priceParam, storeParam, tagsParam });
+    console.log("Reading URL params:", { urlParam, nameParam, priceParam, storeParam, tagsParam, imageUrlParam });
 
     // Only prefill if at least one param exists
-    if (urlParam || nameParam || priceParam || storeParam || tagsParam) {
-      console.log("Prefilling form with:", { urlParam, nameParam, priceParam, storeParam, tagsParam });
+    if (urlParam || nameParam || priceParam || storeParam || tagsParam || imageUrlParam) {
+      console.log("Prefilling form with:", { urlParam, nameParam, priceParam, storeParam, tagsParam, imageUrlParam });
       setForm((prev) => ({
         ...prev,
         url: urlParam ?? prev.url,
@@ -64,6 +67,7 @@ export default function AddItem() {
         price: priceParam ?? prev.price,
         store: storeParam ?? prev.store,
         tags: tagsParam ?? prev.tags,
+        image_url: imageUrlParam ?? prev.image_url,
       }));
       hasPrefilledRef.current = true;
     }
@@ -113,6 +117,7 @@ export default function AddItem() {
           form.status !== "considering" && form.decision_reason.trim()
             ? form.decision_reason.trim()
             : null,
+        image_url: form.image_url.trim() || null,
         user_id: user.id,
         wishlist_id: activeWishlistId,
       },
@@ -131,6 +136,7 @@ export default function AddItem() {
         tags: "",
         status: "considering",
         decision_reason: "",
+        image_url: "",
       });
     }
 
@@ -147,6 +153,7 @@ export default function AddItem() {
       tags: "",
       status: "considering",
       decision_reason: "",
+      image_url: "",
     });
     setError(null);
   };

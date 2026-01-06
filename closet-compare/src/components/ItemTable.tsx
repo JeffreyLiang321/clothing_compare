@@ -42,6 +42,7 @@ type EditableItem = {
   notes: string;
   status: "considering" | "bought" | "dropped";
   decision_reason: string;
+  image_url: string;
 };
 
 function ItemRow({
@@ -64,6 +65,7 @@ function ItemRow({
     notes: item.notes || "",
     status: item.status || "considering",
     decision_reason: item.decision_reason || "",
+    image_url: item.image_url || "",
   }));
 
   const handleSave = () => {
@@ -82,6 +84,7 @@ function ItemRow({
         editData.status !== "considering" && editData.decision_reason.trim()
           ? editData.decision_reason.trim()
           : null,
+      image_url: editData.image_url.trim() || null,
     };
     if (onUpdate) {
       onUpdate(updatedItem);
@@ -98,6 +101,7 @@ function ItemRow({
       notes: item.notes || "",
       status: item.status || "considering",
       decision_reason: item.decision_reason || "",
+      image_url: item.image_url || "",
     });
     setIsEditing(false);
   };
@@ -139,6 +143,16 @@ function ItemRow({
             }
             placeholder="Item name"
             style={{ width: "100%", minWidth: 140 }}
+          />
+          <input
+            type="url"
+            className="input"
+            value={editData.image_url}
+            onChange={(e) =>
+              setEditData({ ...editData, image_url: e.target.value })
+            }
+            placeholder="Image URL (optional)"
+            style={{ width: "100%", minWidth: 140, marginTop: 8, fontSize: 12 }}
           />
         </td>
         <td style={{ minWidth: 140, width: "auto" }}>
@@ -246,7 +260,27 @@ function ItemRow({
           ? "—"
           : `$${item.price.toFixed(2)}`}
       </td>
-      <td>{item.name || <span style={{ color: "var(--muted)" }}>—</span>}</td>
+      <td>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {item.image_url && (
+            <img
+              src={item.image_url}
+              alt={item.name || "Item"}
+              style={{
+                width: 48,
+                height: 48,
+                objectFit: "cover",
+                borderRadius: 4,
+                border: "1px solid var(--border)",
+              }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
+          <span>{item.name || <span style={{ color: "var(--muted)" }}>—</span>}</span>
+        </div>
+      </td>
       <td>
         <span className={getStatusClass(item.status || "considering")}>
           {getStatusLabel(item.status || "considering")}

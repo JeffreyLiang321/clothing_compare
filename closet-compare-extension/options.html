@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Closet Compare Saver — Options</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 16px; max-width: 520px; }
+      h1 { font-size: 18px; margin: 0 0 12px; }
+      label { display: block; font-size: 12px; color: #374151; margin-bottom: 6px; }
+      input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; }
+      button { margin-top: 12px; padding: 10px 12px; border: 0; border-radius: 10px; background: #111827; color: white; cursor: pointer; }
+      .hint { font-size: 12px; color: #6b7280; margin-top: 8px; }
+      .status { margin-top: 10px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>Closet Compare Saver — Options</h1>
+    <label for="origin">Closet Compare App URL</label>
+    <input id="origin" placeholder="https://your-app.vercel.app" />
+    <button id="save">Save</button>
+    <div class="hint">Use http://localhost:5173 for local dev, or your Vercel URL for real use.</div>
+    <div class="status" id="status"></div>
+    <script src="options.js"></script>
+  </body>
+</html>

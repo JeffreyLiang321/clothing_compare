@@ -19,6 +19,7 @@ export type Item = {
   tags: string[];
   status: ItemStatus;
   decision_reason: string | null;
+  image_url: string | null;
   user_id: string;
   wishlist_id: string;
   created_at: string;

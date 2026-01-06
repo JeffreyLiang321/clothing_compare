@@ -199,6 +199,7 @@ export default function List() {
         updatedItem.status !== "considering" && updatedItem.decision_reason
           ? updatedItem.decision_reason
           : null,
+      image_url: updatedItem.image_url || null,
     };
 
     const { error } = await supabase

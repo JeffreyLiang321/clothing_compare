@@ -8,6 +8,7 @@ type Props = {
     tags: string;
     status: "considering" | "bought" | "dropped";
     decision_reason: string;
+    image_url: string;
   };
   onChange: (f: any) => void;
   onSubmit: () => void;
