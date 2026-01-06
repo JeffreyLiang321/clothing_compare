@@ -1,0 +1,35 @@
+export type ItemStatus = "considering" | "bought" | "dropped";
+
+export type Wishlist = {
+  id: string;
+  user_id: string;
+  name: string;
+  is_public: boolean;
+  share_token: string;
+  created_at: string;
+};
+
+export type Item = {
+  id: string;
+  url: string;
+  store: string;
+  name: string;
+  price: number | null;
+  notes: string | null;
+  tags: string[];
+  status: ItemStatus;
+  decision_reason: string | null;
+  user_id: string;
+  wishlist_id: string;
+  created_at: string;
+};
+
+export type WishlistShare = {
+  id: string;
+  wishlist_id: string;
+  owner_id: string;
+  owner_email: string;
+  shared_with_email: string;
+  created_at: string;
+};
+  
