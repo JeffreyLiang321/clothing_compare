@@ -84,15 +84,17 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
       setWishlists(wishlistsList);
 
       const storedId = localStorage.getItem(ACTIVE_WISHLIST_KEY);
-      let activeId = storedId;
+      let activeId: string;
 
       if (!storedId || !wishlistsList.find((w) => w.id === storedId)) {
         activeId = wishlistsList[0].id;
         localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
+      } else {
+        activeId = storedId;
       }
 
       setActiveWishlistId(activeId);
-      if (onWishlistChangeRef.current && activeId) {
+      if (onWishlistChangeRef.current) {
         onWishlistChangeRef.current(activeId);
       }
 

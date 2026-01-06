@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import ItemForm from "../components/ItemForm";
@@ -17,6 +18,7 @@ type NewItem = {
 
 export default function AddItem() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
   const [form, setForm] = useState<NewItem>({
     url: "",
@@ -31,6 +33,7 @@ export default function AddItem() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasPrefilledRef = useRef(false);
 
   useEffect(() => {
     const storedId = getActiveWishlistId();
@@ -38,6 +41,34 @@ export default function AddItem() {
       setActiveWishlistId(storedId);
     }
   }, []);
+
+  // Prefill form from URL query params (only once on mount)
+  useEffect(() => {
+    if (hasPrefilledRef.current) return;
+
+    const urlParam = searchParams.get("url");
+    const nameParam = searchParams.get("name");
+    const priceParam = searchParams.get("price");
+    const storeParam = searchParams.get("store");
+    const tagsParam = searchParams.get("tags");
+
+    console.log("Reading URL params:", { urlParam, nameParam, priceParam, storeParam, tagsParam });
+
+    // Only prefill if at least one param exists
+    if (urlParam || nameParam || priceParam || storeParam || tagsParam) {
+      console.log("Prefilling form with:", { urlParam, nameParam, priceParam, storeParam, tagsParam });
+      setForm((prev) => ({
+        ...prev,
+        url: urlParam ?? prev.url,
+        name: nameParam ?? prev.name,
+        price: priceParam ?? prev.price,
+        store: storeParam ?? prev.store,
+        tags: tagsParam ?? prev.tags,
+      }));
+      hasPrefilledRef.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleWishlistChange = (wishlistId: string) => {
     setActiveWishlistId(wishlistId);

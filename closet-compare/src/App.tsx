@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import List from "./pages/List";
@@ -33,6 +33,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function Nav() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -101,7 +102,9 @@ export default function App() {
 
           if (!error) {
             window.location.hash = "";
-            navigate("/");
+            if (location.pathname.startsWith("auth")) {
+              navigate("/");
+            }
           }
         }
       }
@@ -113,7 +116,9 @@ export default function App() {
       async (event, session) => {
         if (event === "SIGNED_IN" && session) {
           window.location.hash = "";
-          navigate("/");
+          if (location.pathname.startsWith("auth")) {
+            navigate("/");
+          }
         }
       }
     );
@@ -121,7 +126,7 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   if (loading) {
     return (
