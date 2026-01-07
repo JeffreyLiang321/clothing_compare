@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Auth() {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,8 +12,23 @@ export default function Auth() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!authLoading && session) {
+      navigate("/", { replace: true });
+    }
+  }, [session, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="panel">
+        <div className="panel-body">
+          <div className="empty">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   if (session) {
-    navigate("/", { replace: true });
     return null;
   }
 

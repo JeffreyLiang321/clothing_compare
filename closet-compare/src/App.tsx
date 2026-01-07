@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import List from "./pages/List";
@@ -85,8 +85,11 @@ function Nav() {
 export default function App() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    if (loading) return;
+
     const handleHashChange = async () => {
       if (window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -102,7 +105,7 @@ export default function App() {
 
           if (!error) {
             window.location.hash = "";
-            if (location.pathname.startsWith("auth")) {
+            if (location.pathname.startsWith("/auth")) {
               navigate("/");
             }
           }
@@ -116,7 +119,7 @@ export default function App() {
       async (event, session) => {
         if (event === "SIGNED_IN" && session) {
           window.location.hash = "";
-          if (location.pathname.startsWith("auth")) {
+          if (location.pathname.startsWith("/auth")) {
             navigate("/");
           }
         }
@@ -126,7 +129,7 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, loading]);
 
   if (loading) {
     return (
@@ -143,10 +146,7 @@ export default function App() {
       {session && <Nav />}
       <div className="container">
         <Routes>
-          <Route
-            path="/auth"
-            element={session ? <Navigate to="/" replace /> : <Auth />}
-          />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/share/:token" element={<Share />} />
           <Route
