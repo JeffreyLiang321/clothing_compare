@@ -7,40 +7,24 @@ export default function AuthCallback() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        const code = searchParams.get("code");
-
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (error) {
-            console.error("Auth callback error:", error);
-            navigate("/auth?error=auth_failed");
-            return;
-          }
-
-          navigate("/", { replace: true });
-        } else {
-          setTimeout(() => {
-            navigate("/", { replace: true });
-          }, 1000);
-        }
-      } catch (err) {
-        console.error("Auth callback error:", err);
-        navigate("/auth");
+    (async () => {
+      const code = searchParams.get("code");
+      if (!code) {
+        navigate("/auth", { replace: true });
+        return;
       }
-    };
 
-    handleAuthCallback();
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        console.error("exchangeCodeForSession error:", error);
+        navigate("/auth", { replace: true });
+        return;
+      }
+
+      navigate("/", { replace: true });
+    })();
   }, [navigate, searchParams]);
 
-  return (
-    <div className="panel">
-      <div className="panel-body">
-        <div className="empty">Signing you in...</div>
-      </div>
-    </div>
-  );
+  return <div style={{ padding: 24 }}>Signing you in...</div>;
 }
 
