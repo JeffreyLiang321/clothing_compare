@@ -23,10 +23,6 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
-      if (event === "SIGNED_IN" && session) {
-        window.location.hash = "";
-      }
     });
 
     return () => subscription.unsubscribe();

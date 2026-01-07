@@ -1,23 +1,27 @@
-import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const code = searchParams.get("code");
       if (!code) {
-        navigate("/auth", { replace: true });
+        setError("No authorization code found. Please try signing in again.");
+        setLoading(false);
         return;
       }
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) {
-        console.error("exchangeCodeForSession error:", error);
-        navigate("/auth", { replace: true });
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) {
+        console.error("exchangeCodeForSession error:", exchangeError);
+        setError(`Authentication failed: ${exchangeError.message}`);
+        setLoading(false);
         return;
       }
 
@@ -25,6 +29,30 @@ export default function AuthCallback() {
     })();
   }, [navigate, searchParams]);
 
-  return <div style={{ padding: 24 }}>Signing you in...</div>;
+  if (loading) {
+    return (
+      <div className="panel">
+        <div className="panel-body">
+          <div className="empty">Signing you in...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="panel">
+        <div className="panel-body" style={{ maxWidth: 500, margin: "0 auto" }}>
+          <h1>Authentication Error</h1>
+          <p style={{ color: "var(--muted)", marginBottom: 24 }}>{error}</p>
+          <Link to="/auth" className="button">
+            Go to Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 

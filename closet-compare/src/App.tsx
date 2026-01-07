@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import List from "./pages/List";
@@ -37,7 +36,7 @@ function Nav() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/auth", { replace: true });
   };
 
   if (!user) return null;
@@ -84,52 +83,6 @@ function Nav() {
 
 export default function App() {
   const { session, loading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (loading) return;
-
-    const handleHashChange = async () => {
-      if (window.location.hash) {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
-        const type = hashParams.get("type");
-
-        if (type === "magiclink" && accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (!error) {
-            window.location.hash = "";
-            if (location.pathname.startsWith("/auth")) {
-              navigate("/");
-            }
-          }
-        }
-      }
-    };
-
-    handleHashChange();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          window.location.hash = "";
-          if (location.pathname.startsWith("/auth")) {
-            navigate("/");
-          }
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, location.pathname, loading]);
 
   if (loading) {
     return (
