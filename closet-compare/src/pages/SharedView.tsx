@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
@@ -25,53 +25,109 @@ export default function SharedView() {
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [savingCopy, setSavingCopy] = useState(false);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastFetchedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchWishlist = async () => {
+      // Wait for auth to finish loading
       if (authLoading) {
         return;
       }
 
+      // Don't enter loading state if prerequisites are missing
       if (!id) {
         setError("Invalid wishlist ID");
         setWishlistLoading(false);
+        setWishlist(null);
+        isFetchingRef.current = false;
+        lastFetchedIdRef.current = null;
         return;
       }
 
       if (!user?.email) {
         setError("You must be signed in to view shared wishlists");
         setWishlistLoading(false);
+        setWishlist(null);
+        isFetchingRef.current = false;
+        lastFetchedIdRef.current = null;
         return;
       }
 
+      // Prevent duplicate fetches - if already fetching or already fetched this ID, skip
+      if (isFetchingRef.current || lastFetchedIdRef.current === id) {
+        return;
+      }
+
+      // If ID changed, reset the last fetched ID to allow new fetch
+      if (lastFetchedIdRef.current && lastFetchedIdRef.current !== id) {
+        lastFetchedIdRef.current = null;
+      }
+
+      isFetchingRef.current = true;
+      lastFetchedIdRef.current = id;
       setWishlistLoading(true);
+      setError(null);
 
       try {
+        console.log("[SharedView] Fetching share access for wishlist:", id, "email:", user.email);
         await getShareByWishlistAndEmail(id, user.email);
 
+        console.log("[SharedView] Share access confirmed, fetching wishlist data...");
         const { data: wishlistData, error: wishlistError } = await supabase
           .from("wishlists")
           .select("*")
           .eq("id", id)
           .single();
 
-        if (wishlistError || !wishlistData) {
+        if (wishlistError) {
+          console.error(
+            "[SharedView] Error fetching wishlist:",
+            {
+              wishlist_id: id,
+              error: wishlistError,
+              table: "wishlists",
+              filter: `id = ${id}`,
+            }
+          );
           setError("Wishlist not found");
-          setWishlistLoading(false);
+          setWishlist(null);
           return;
         }
 
+        if (!wishlistData) {
+          console.warn("[SharedView] Wishlist not found:", id);
+          setError("Wishlist not found");
+          setWishlist(null);
+          return;
+        }
+
+        console.log("[SharedView] Successfully loaded wishlist:", wishlistData.name);
         setWishlist(wishlistData as Wishlist);
       } catch (error: any) {
-        console.error("Error fetching shared wishlist:", error);
+        console.error(
+          "[SharedView] Error fetching shared wishlist:",
+          {
+            error,
+            wishlist_id: id,
+            email: user.email,
+            table: "wishlist_shares",
+            filter: `wishlist_id = ${id} AND shared_with_email ilike ${user.email}`,
+          }
+        );
         setError("You don't have access to this wishlist");
+        setWishlist(null);
+      } finally {
+        // ALWAYS set loading to false, regardless of success or error
+        setWishlistLoading(false);
+        isFetchingRef.current = false;
       }
-
-      setWishlistLoading(false);
     };
 
     fetchWishlist();
-  }, [id, user, authLoading, getShareByWishlistAndEmail]);
+    // Only depend on id and user.email, not the entire user object or getShareByWishlistAndEmail function
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.email, authLoading]);
 
   const loading = itemsLoading || wishlistLoading;
 
