@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { useItems } from "../hooks/useItems";
+import { useWishlists } from "../hooks/useWishlists";
 import type { Item, Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
@@ -9,8 +10,10 @@ type FilterStatus = "all" | "considering" | "bought" | "dropped";
 
 export default function Share() {
   const { token } = useParams<{ token: string }>();
+  const { getWishlistByToken } = useWishlists(null);
+  const [wishlistId, setWishlistId] = useState<string | null>(null);
+  const { items, loading: itemsLoading } = useItems(wishlistId);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
@@ -28,39 +31,22 @@ export default function Share() {
 
       setLoading(true);
 
-      const { data: wishlistData, error: wishlistError } = await supabase
-        .from("wishlists")
-        .select("*")
-        .eq("share_token", token)
-        .eq("is_public", true)
-        .single();
-
-      if (wishlistError || !wishlistData) {
+      try {
+        const wishlistData = await getWishlistByToken(token);
+        setWishlist(wishlistData);
+        setWishlistId(wishlistData.id);
+      } catch (error: any) {
+        console.error("Error fetching wishlist:", error);
         setError("This wishlist isn't shared or doesn't exist");
-        setLoading(false);
-        return;
-      }
-
-      setWishlist(wishlistData as Wishlist);
-
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("items")
-        .select("*")
-        .eq("wishlist_id", wishlistData.id)
-        .order("created_at", { ascending: false });
-
-      if (itemsError) {
-        console.error("Error fetching items:", itemsError);
-        setError("Failed to load items");
-      } else {
-        setItems(itemsData || []);
       }
 
       setLoading(false);
     };
 
     fetchWishlist();
-  }, [token]);
+  }, [token, getWishlistByToken]);
+
+  const loading = itemsLoading || loading;
 
   const filteredItems =
     filter === "all"

@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
+import { useWishlists } from "../hooks/useWishlists";
+import { useWishlistShares } from "../hooks/useWishlistShares";
 import type { WishlistShare, Wishlist } from "../types";
 
 export default function Shared() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { getSharesByEmail } = useWishlistShares(null, null);
+  const { getWishlist } = useWishlists(user?.id || null);
   const [shares, setShares] = useState<
     Array<WishlistShare & { wishlist: Wishlist }>
   >([]);
@@ -21,51 +24,54 @@ export default function Shared() {
 
       setLoading(true);
 
-      const { data: sharesData, error: sharesError } = await supabase
-        .from("wishlist_shares")
-        .select("*")
-        .ilike("shared_with_email", user.email);
+      try {
+        const sharesData = await getSharesByEmail(user.email);
 
-      if (sharesError) {
-        console.error("Error fetching shared wishlists:", sharesError);
-        setLoading(false);
-        return;
-      }
+        if (!sharesData || sharesData.length === 0) {
+          setShares([]);
+          setLoading(false);
+          return;
+        }
 
-      if (!sharesData || sharesData.length === 0) {
-        setShares([]);
-        setLoading(false);
-        return;
-      }
+        const sharesWithWishlists = await Promise.all(
+          sharesData.map(async (share) => {
+            try {
+              // For shared wishlists, we need to fetch without user_id check
+              // So we'll use a direct query here
+              const { data: wishlistData, error } = await supabase
+                .from("wishlists")
+                .select("*")
+                .eq("id", share.wishlist_id)
+                .single();
 
-      const wishlistIds = sharesData.map((share) => share.wishlist_id);
-      const { data: wishlistsData, error: wishlistsError } = await supabase
-        .from("wishlists")
-        .select("*")
-        .in("id", wishlistIds);
+              if (error || !wishlistData) {
+                return null;
+              }
 
-      if (wishlistsError) {
-        console.error("Error fetching wishlists:", wishlistsError);
-        setLoading(false);
-        return;
-      }
-
-      const sharesWithWishlists = sharesData
-        .map((share) => {
-          const wishlist = wishlistsData?.find((w) => w.id === share.wishlist_id);
-          return wishlist ? { ...share, wishlist } : null;
-        })
-        .filter(
-          (item): item is WishlistShare & { wishlist: Wishlist } =>
-            item !== null
+              return { ...share, wishlist: wishlistData as Wishlist };
+            } catch (error) {
+              console.error("Error fetching wishlist:", error);
+              return null;
+            }
+          })
         );
 
-      setShares(sharesWithWishlists);
+        setShares(
+          sharesWithWishlists.filter(
+            (item): item is WishlistShare & { wishlist: Wishlist } =>
+              item !== null
+          )
+        );
+      } catch (error) {
+        console.error("Error fetching shared wishlists:", error);
+        setShares([]);
+      }
+
       setLoading(false);
     };
 
     fetchSharedWishlists();
-  }, [user]);
+  }, [user, getSharesByEmail]);
 
   if (loading) {
     return (

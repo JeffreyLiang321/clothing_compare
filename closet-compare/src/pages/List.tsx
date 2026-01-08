@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
-import type { Item, Wishlist, WishlistShare } from "../types";
+import { useItems } from "../hooks/useItems";
+import { useWishlists } from "../hooks/useWishlists";
+import { useWishlistShares } from "../hooks/useWishlistShares";
+import type { Item } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
 import WishlistSelector from "../components/WishlistSelector";
@@ -10,10 +12,8 @@ type FilterStatus = "all" | "considering" | "bought" | "dropped";
 
 export default function List() {
   const { user } = useAuth();
-  const [items, setItems] = useState<Item[]>([]);
-  const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [wishlist, setWishlist] = useState<{ name: string } | null>(null);
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
     "newest"
   );
@@ -21,62 +21,34 @@ export default function List() {
   const [accountShareEmail, setAccountShareEmail] = useState("");
   const [accountShareLoading, setAccountShareLoading] = useState(false);
   const [accountShareMessage, setAccountShareMessage] = useState<string | null>(null);
-  const [accountShares, setAccountShares] = useState<WishlistShare[]>([]);
+
+  const { items, loading: itemsLoading, updateItem, deleteItem } = useItems(activeWishlistId);
+  const { getWishlist } = useWishlists(user?.id || null);
+  const { shares: accountShares, loading: sharesLoading, createShare, deleteShare, refetch: refetchShares } = useWishlistShares(
+    activeWishlistId,
+    user?.id || null
+  );
+
+  const loading = itemsLoading || sharesLoading;
 
   useEffect(() => {
-    const loadWishlistData = async () => {
+    const loadWishlist = async () => {
       if (!user || !activeWishlistId) {
-        setLoading(false);
+        setWishlist(null);
         return;
       }
 
-      setLoading(true);
-
-      const { data: wishlistData, error: wishlistError } = await supabase
-        .from("wishlists")
-        .select("*")
-        .eq("id", activeWishlistId)
-        .eq("user_id", user.id)
-        .single();
-
-      if (wishlistError) {
-        console.error("Error fetching wishlist:", wishlistError);
-        setLoading(false);
-        return;
+      try {
+        const wishlistData = await getWishlist(activeWishlistId, user.id);
+        setWishlist({ name: wishlistData.name });
+      } catch (error) {
+        console.error("Error loading wishlist:", error);
+        setWishlist(null);
       }
-
-      setWishlist(wishlistData as Wishlist);
-
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("items")
-        .select("*")
-        .eq("wishlist_id", activeWishlistId)
-        .order("created_at", { ascending: false });
-
-      if (itemsError) {
-        console.error("Error fetching items:", itemsError);
-      } else {
-        setItems(itemsData || []);
-      }
-
-      const { data: sharesData, error: sharesError } = await supabase
-        .from("wishlist_shares")
-        .select("*")
-        .eq("wishlist_id", activeWishlistId)
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (sharesError) {
-        console.error("Error fetching shares:", sharesError);
-      } else {
-        setAccountShares(sharesData || []);
-      }
-
-      setLoading(false);
     };
 
-    loadWishlistData();
-  }, [user, activeWishlistId]);
+    loadWishlist();
+  }, [user, activeWishlistId, getWishlist]);
 
   const handleWishlistChange = (wishlistId: string) => {
     setActiveWishlistId(wishlistId);
@@ -100,31 +72,20 @@ export default function List() {
     setAccountShareLoading(true);
     setAccountShareMessage(null);
 
-    const { error } = await supabase.from("wishlist_shares").insert([
-      {
+    try {
+      await createShare({
         wishlist_id: activeWishlistId,
         owner_id: user.id,
         owner_email: user.email,
         shared_with_email: email,
-      },
-    ]);
+      });
 
-    if (error) {
-      console.error("Error sharing wishlist:", error);
-      setAccountShareMessage(error.message || "Failed to share wishlist");
-    } else {
       setAccountShareEmail("");
       setAccountShareMessage("Wishlist shared successfully!");
-      const { data: sharesData } = await supabase
-        .from("wishlist_shares")
-        .select("*")
-        .eq("wishlist_id", activeWishlistId)
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
-      if (sharesData) {
-        setAccountShares(sharesData);
-      }
       setTimeout(() => setAccountShareMessage(null), 3000);
+    } catch (error: any) {
+      console.error("Error sharing wishlist:", error);
+      setAccountShareMessage(error.message || "Failed to share wishlist");
     }
 
     setAccountShareLoading(false);
@@ -133,18 +94,11 @@ export default function List() {
   const handleRemoveShare = async (shareId: string) => {
     if (!activeWishlistId || !user) return;
 
-    const { error } = await supabase
-      .from("wishlist_shares")
-      .delete()
-      .eq("id", shareId)
-      .eq("wishlist_id", activeWishlistId)
-      .eq("owner_id", user.id);
-
-    if (error) {
+    try {
+      await deleteShare(shareId);
+    } catch (error) {
       console.error("Error removing share:", error);
       alert("Failed to remove share");
-    } else {
-      setAccountShares(accountShares.filter((share) => share.id !== shareId));
     }
   };
 
@@ -171,49 +125,20 @@ export default function List() {
       return;
     }
 
-    const { error } = await supabase.from("items").delete().eq("id", id);
-
-    if (error) {
+    try {
+      await deleteItem(id);
+    } catch (error) {
       console.error("Error deleting item:", error);
       alert("Failed to delete item. Please try again.");
-    } else {
-      setItems(items.filter((item) => item.id !== id));
     }
   };
 
   const handleUpdate = async (updatedItem: Item) => {
-    const tagsArray = Array.isArray(updatedItem.tags)
-      ? updatedItem.tags
-      : [];
-
-    const priceNumber = updatedItem.price;
-
-    const updateData = {
-      store: updatedItem.store,
-      name: updatedItem.name || null,
-      price: priceNumber,
-      notes: updatedItem.notes || null,
-      tags: tagsArray,
-      status: updatedItem.status,
-      decision_reason:
-        updatedItem.status !== "considering" && updatedItem.decision_reason
-          ? updatedItem.decision_reason
-          : null,
-      image_url: updatedItem.image_url || null,
-    };
-
-    const { error } = await supabase
-      .from("items")
-      .update(updateData)
-      .eq("id", updatedItem.id);
-
-    if (error) {
+    try {
+      await updateItem(updatedItem);
+    } catch (error) {
       console.error("Error updating item:", error);
       alert("Failed to update item. Please try again.");
-    } else {
-      setItems(
-        items.map((item) => (item.id === updatedItem.id ? updatedItem : item))
-      );
     }
   };
 

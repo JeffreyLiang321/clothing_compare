@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
+import { useItems } from "../hooks/useItems";
 import ItemForm from "../components/ItemForm";
 import WishlistSelector, { getActiveWishlistId } from "../components/WishlistSelector";
 
@@ -78,6 +78,8 @@ export default function AddItem() {
     setActiveWishlistId(wishlistId);
   };
 
+  const { createItem } = useItems(activeWishlistId);
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -104,8 +106,8 @@ export default function AddItem() {
       return;
     }
 
-    const { error } = await supabase.from("items").insert([
-      {
+    try {
+      await createItem({
         url: form.url,
         store: form.store,
         name: nameValue,
@@ -120,13 +122,8 @@ export default function AddItem() {
         image_url: form.image_url.trim() || null,
         user_id: user.id,
         wishlist_id: activeWishlistId,
-      },
-    ]);
+      });
 
-    if (error) {
-      console.error("Supabase insert error:", error);
-      setError(error.message);
-    } else {
       setForm({
         url: "",
         store: "",
@@ -138,6 +135,9 @@ export default function AddItem() {
         decision_reason: "",
         image_url: "",
       });
+    } catch (error: any) {
+      console.error("Error creating item:", error);
+      setError(error.message || "Failed to create item");
     }
 
     setLoading(false);

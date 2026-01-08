@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
+import { useItems } from "../hooks/useItems";
+import { useWishlistShares } from "../hooks/useWishlistShares";
 import type { Item, Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
@@ -12,8 +14,9 @@ type FilterStatus = "all" | "considering" | "bought" | "dropped";
 export default function SharedView() {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
+  const { items, loading: itemsLoading } = useItems(id || null);
+  const { getShareByWishlistAndEmail } = useWishlistShares(null, null);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
@@ -25,7 +28,6 @@ export default function SharedView() {
 
   useEffect(() => {
     const fetchWishlist = async () => {
-      // Wait for auth to finish loading
       if (authLoading) {
         return;
       }
@@ -44,51 +46,34 @@ export default function SharedView() {
 
       setLoading(true);
 
-      const { data: shareData, error: shareError } = await supabase
-        .from("wishlist_shares")
-        .select("*")
-        .eq("wishlist_id", id)
-        .ilike("shared_with_email", user.email)
-        .single();
+      try {
+        await getShareByWishlistAndEmail(id, user.email);
 
-      if (shareError || !shareData) {
+        const { data: wishlistData, error: wishlistError } = await supabase
+          .from("wishlists")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (wishlistError || !wishlistData) {
+          setError("Wishlist not found");
+          setLoading(false);
+          return;
+        }
+
+        setWishlist(wishlistData as Wishlist);
+      } catch (error: any) {
+        console.error("Error fetching shared wishlist:", error);
         setError("You don't have access to this wishlist");
-        setLoading(false);
-        return;
-      }
-
-      const { data: wishlistData, error: wishlistError } = await supabase
-        .from("wishlists")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (wishlistError || !wishlistData) {
-        setError("Wishlist not found");
-        setLoading(false);
-        return;
-      }
-
-      setWishlist(wishlistData as Wishlist);
-
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("items")
-        .select("*")
-        .eq("wishlist_id", id)
-        .order("created_at", { ascending: false });
-
-      if (itemsError) {
-        console.error("Error fetching items:", itemsError);
-        setError("Failed to load items");
-      } else {
-        setItems(itemsData || []);
       }
 
       setLoading(false);
     };
 
     fetchWishlist();
-  }, [id, user, authLoading]);
+  }, [id, user, authLoading, getShareByWishlistAndEmail]);
+
+  const loading = itemsLoading || loading;
 
   const filteredItems =
     filter === "all"
@@ -121,26 +106,31 @@ export default function SharedView() {
     setSavingCopy(true);
     setCopyMessage(null);
 
-    const itemsToInsert = items.map((item) => ({
-      url: item.url,
-      store: item.store,
-      name: item.name,
-      price: item.price,
-      notes: item.notes,
-      tags: item.tags,
-      status: item.status,
-      decision_reason: item.decision_reason,
-      user_id: user.id,
-      wishlist_id: activeWishlistId,
-    }));
+    try {
+      const itemsToInsert = items.map((item) => ({
+        url: item.url,
+        store: item.store,
+        name: item.name,
+        price: item.price,
+        notes: item.notes,
+        tags: item.tags,
+        status: item.status,
+        decision_reason: item.decision_reason,
+        image_url: item.image_url,
+        user_id: user.id,
+        wishlist_id: activeWishlistId,
+      }));
 
-    const { error } = await supabase.from("items").insert(itemsToInsert);
+      const { error } = await supabase.from("items").insert(itemsToInsert);
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      setCopyMessage(`Copied ${items.length} item(s) to your cart!`);
+    } catch (error) {
       console.error("Error copying items:", error);
       setCopyMessage("Failed to copy items");
-    } else {
-      setCopyMessage(`Copied ${items.length} item(s) to your cart!`);
     }
 
     setSavingCopy(false);
