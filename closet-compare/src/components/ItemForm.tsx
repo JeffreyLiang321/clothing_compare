@@ -104,6 +104,37 @@ export default function ItemForm({
           />
         </div>
 
+        <div className="form-grid-full">
+          <label className="label" htmlFor="image_url">
+            Image URL (optional)
+          </label>
+          <input
+            id="image_url"
+            type="url"
+            className="input"
+            value={form.image_url}
+            onChange={(e) => onChange({ ...form, image_url: e.target.value })}
+            placeholder="https://example.com/image.jpg"
+          />
+          {form.image_url && (
+            <div style={{ marginTop: 8 }}>
+              <img
+                src={form.image_url}
+                alt="Preview"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 200,
+                  borderRadius: 4,
+                  border: "1px solid var(--border)",
+                }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            </div>
+          )}
+        </div>
+
         <div>
           <label className="label" htmlFor="status">
             Status
