@@ -13,60 +13,102 @@ export default function Shared() {
     Array<WishlistShare & { wishlist: Wishlist }>
   >([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSharedWishlists = async () => {
+      // Don't enter loading state if user is not available
       if (!user?.email) {
         setLoading(false);
+        setError(null);
+        setShares([]);
         return;
       }
 
       setLoading(true);
+      setError(null);
 
       try {
+        console.log("[Shared] Fetching shares for email:", user.email);
         const sharesData = await getSharesByEmail(user.email);
 
         if (!sharesData || sharesData.length === 0) {
+          console.log("[Shared] No shares found");
           setShares([]);
           setLoading(false);
           return;
         }
 
+        console.log("[Shared] Found", sharesData.length, "shares, fetching wishlists...");
         const sharesWithWishlists = await Promise.all(
           sharesData.map(async (share) => {
             try {
               // For shared wishlists, we need to fetch without user_id check
               // So we'll use a direct query here
-              const { data: wishlistData, error } = await supabase
+              const { data: wishlistData, error: wishlistError } = await supabase
                 .from("wishlists")
                 .select("*")
                 .eq("id", share.wishlist_id)
                 .single();
 
-              if (error || !wishlistData) {
+              if (wishlistError) {
+                console.error(
+                  "[Shared] Error fetching wishlist:",
+                  {
+                    wishlist_id: share.wishlist_id,
+                    error: wishlistError,
+                    table: "wishlists",
+                    filter: `id = ${share.wishlist_id}`,
+                  }
+                );
+                return null;
+              }
+
+              if (!wishlistData) {
+                console.warn("[Shared] Wishlist not found:", share.wishlist_id);
                 return null;
               }
 
               return { ...share, wishlist: wishlistData as Wishlist };
             } catch (error) {
-              console.error("Error fetching wishlist:", error);
+              console.error(
+                "[Shared] Error fetching wishlist (exception):",
+                {
+                  wishlist_id: share.wishlist_id,
+                  error,
+                  table: "wishlists",
+                }
+              );
               return null;
             }
           })
         );
 
-        setShares(
-          sharesWithWishlists.filter(
-            (item): item is WishlistShare & { wishlist: Wishlist } =>
-              item !== null
-          )
+        const validShares = sharesWithWishlists.filter(
+          (item): item is WishlistShare & { wishlist: Wishlist } =>
+            item !== null
         );
-      } catch (error) {
-        console.error("Error fetching shared wishlists:", error);
-        setShares([]);
-      }
 
-      setLoading(false);
+        console.log("[Shared] Successfully loaded", validShares.length, "wishlists");
+        setShares(validShares);
+      } catch (error: any) {
+        console.error(
+          "[Shared] Error fetching shared wishlists:",
+          {
+            error,
+            email: user.email,
+            table: "wishlist_shares",
+            filter: `shared_with_email ilike ${user.email}`,
+          }
+        );
+        setError(
+          error?.message || "Failed to load shared wishlists. Please try again."
+        );
+        setShares([]);
+      } finally {
+        // ALWAYS set loading to false, regardless of success or error
+        setLoading(false);
+      }
     };
 
     fetchSharedWishlists();
@@ -77,6 +119,27 @@ export default function Shared() {
       <div className="panel">
         <div className="panel-body">
           <div className="empty">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="panel">
+        <div className="panel-body">
+          <h1>Shared with Me</h1>
+          <p className="subtitle">Wishlists shared with you by other users</p>
+          <div className="toast toast-error" style={{ marginTop: 24 }}>
+            {error}
+          </div>
+          <button
+            className="button"
+            onClick={() => window.location.reload()}
+            style={{ marginTop: 16 }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
