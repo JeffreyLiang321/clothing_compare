@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
@@ -14,6 +14,8 @@ export default function Shared() {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFetchingRef = useRef(false);
+  const lastFetchedEmailRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchSharedWishlists = async () => {
@@ -22,9 +24,23 @@ export default function Shared() {
         setLoading(false);
         setError(null);
         setShares([]);
+        isFetchingRef.current = false;
+        lastFetchedEmailRef.current = null;
         return;
       }
 
+      // If email changed, reset the last fetched email to allow new fetch
+      if (lastFetchedEmailRef.current && lastFetchedEmailRef.current !== user.email) {
+        lastFetchedEmailRef.current = null;
+      }
+
+      // Prevent duplicate fetches - if already fetching or already fetched this email, skip
+      if (isFetchingRef.current || lastFetchedEmailRef.current === user.email) {
+        return;
+      }
+
+      isFetchingRef.current = true;
+      lastFetchedEmailRef.current = user.email;
       setLoading(true);
       setError(null);
 
@@ -35,7 +51,6 @@ export default function Shared() {
         if (!sharesData || sharesData.length === 0) {
           console.log("[Shared] No shares found");
           setShares([]);
-          setLoading(false);
           return;
         }
 
@@ -108,11 +123,14 @@ export default function Shared() {
       } finally {
         // ALWAYS set loading to false, regardless of success or error
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 
     fetchSharedWishlists();
-  }, [user, getSharesByEmail]);
+    // Only depend on user.email, not the entire user object or getSharesByEmail function
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]);
 
   if (loading) {
     return (
