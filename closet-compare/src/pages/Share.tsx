@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
-import type { Item, Wishlist } from "../types";
+import type { Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
 

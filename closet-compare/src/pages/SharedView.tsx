@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useWishlistShares } from "../hooks/useWishlistShares";
-import type { Item, Wishlist } from "../types";
+import type { Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
 import { getActiveWishlistId } from "../components/WishlistSelector";

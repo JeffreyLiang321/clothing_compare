@@ -24,7 +24,7 @@ export default function List() {
 
   const { items, loading: itemsLoading, updateItem, deleteItem } = useItems(activeWishlistId);
   const { getWishlist } = useWishlists(user?.id || null);
-  const { shares: accountShares, loading: sharesLoading, createShare, deleteShare, refetch: refetchShares } = useWishlistShares(
+  const { shares: accountShares, loading: sharesLoading, createShare, deleteShare } = useWishlistShares(
     activeWishlistId,
     user?.id || null
   );

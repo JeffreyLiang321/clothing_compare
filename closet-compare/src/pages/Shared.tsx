@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
@@ -9,7 +10,7 @@ export default function Shared() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { getSharesByEmail } = useWishlistShares(null, null);
-  const { getWishlist } = useWishlists(user?.id || null);
+  // const { getWishlist } = useWishlists(user?.id || null);
   const [shares, setShares] = useState<
     Array<WishlistShare & { wishlist: Wishlist }>
   >([]);
