@@ -123,7 +123,7 @@ export default function Shared() {
       </div>
     );
   }
-
+  // catching error properly 
   if (error) {
     return (
       <div className="panel">
