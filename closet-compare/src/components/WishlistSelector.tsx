@@ -33,16 +33,32 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
 
   useEffect(() => {
     const initializeWishlists = async () => {
+      console.log("[WishlistSelector] initializeWishlists called", {
+        user: user?.id,
+        wishlistsLoading,
+        hasInitialized: hasInitializedRef.current,
+        wishlistsCount: wishlists.length,
+        hasRefetched: hasRefetchedRef.current,
+        wishlistIds: wishlists.map((w) => w.id),
+      });
+
       // Only run when loading completes and we haven't initialized yet
       if (!user || wishlistsLoading || hasInitializedRef.current) {
+        console.log("[WishlistSelector] Early return:", {
+          noUser: !user,
+          loading: wishlistsLoading,
+          initialized: hasInitializedRef.current,
+        });
         return;
       }
 
       // If wishlists is empty and we haven't done a defensive refetch yet, do it
       // This ensures we have the latest data before creating a default
       if (wishlists.length === 0 && !hasRefetchedRef.current) {
+        console.log("[WishlistSelector] Doing defensive refetch (wishlists is empty)");
         hasRefetchedRef.current = true;
         await refetch();
+        console.log("[WishlistSelector] Defensive refetch completed, effect will re-run");
         // If refetch populated wishlists, let the effect re-run with the new data
         return;
       }
@@ -50,11 +66,14 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
       // Now we're confident the list is loaded (either populated or confirmed empty)
       // Mark as initialized to prevent duplicate creation
       hasInitializedRef.current = true;
+      console.log("[WishlistSelector] Marked as initialized. Current wishlists count:", wishlists.length);
 
       // If still empty after refetch, create default wishlist
       if (wishlists.length === 0) {
+        console.log("[WishlistSelector] Creating default 'My Wishlist' (confirmed empty after refetch)");
         try {
           const newWishlist = await createWishlist("My Wishlist");
+          console.log("[WishlistSelector] Created default wishlist:", newWishlist.id);
           await refetch();
 
           const activeId = newWishlist.id;
@@ -71,12 +90,14 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
       }
 
       // If wishlists exist, set active from localStorage or first wishlist
+      console.log("[WishlistSelector] Wishlists exist, setting active wishlist. Available:", wishlists.map((w) => ({ id: w.id, name: w.name })));
       const storedId = localStorage.getItem(ACTIVE_WISHLIST_KEY);
       const activeId =
         storedId && wishlists.some((w) => w.id === storedId)
           ? storedId
           : wishlists[0].id;
 
+      console.log("[WishlistSelector] Setting active wishlist:", activeId);
       setActiveWishlistId(activeId);
       localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
       if (onWishlistChangeRef.current) {
