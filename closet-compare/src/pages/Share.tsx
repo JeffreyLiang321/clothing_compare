@@ -14,7 +14,7 @@ export default function Share() {
   const [wishlistId, setWishlistId] = useState<string | null>(null);
   const { items, loading: itemsLoading } = useItems(wishlistId);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [wishlistLoading, setWishlistLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
     "newest"
@@ -25,11 +25,11 @@ export default function Share() {
     const fetchWishlist = async () => {
       if (!token) {
         setError("Invalid share link");
-        setLoading(false);
+        setWishlistLoading(false);
         return;
       }
 
-      setLoading(true);
+      setWishlistLoading(true);
 
       try {
         const wishlistData = await getWishlistByToken(token);
@@ -40,13 +40,13 @@ export default function Share() {
         setError("This wishlist isn't shared or doesn't exist");
       }
 
-      setLoading(false);
+      setWishlistLoading(false);
     };
 
     fetchWishlist();
   }, [token, getWishlistByToken]);
 
-  const loading = itemsLoading || loading;
+  const loading = itemsLoading || wishlistLoading;
 
   const filteredItems =
     filter === "all"

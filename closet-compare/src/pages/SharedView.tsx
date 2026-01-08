@@ -17,7 +17,7 @@ export default function SharedView() {
   const { items, loading: itemsLoading } = useItems(id || null);
   const { getShareByWishlistAndEmail } = useWishlistShares(null, null);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [wishlistLoading, setWishlistLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
     "newest"
@@ -34,17 +34,17 @@ export default function SharedView() {
 
       if (!id) {
         setError("Invalid wishlist ID");
-        setLoading(false);
+        setWishlistLoading(false);
         return;
       }
 
       if (!user?.email) {
         setError("You must be signed in to view shared wishlists");
-        setLoading(false);
+        setWishlistLoading(false);
         return;
       }
 
-      setLoading(true);
+      setWishlistLoading(true);
 
       try {
         await getShareByWishlistAndEmail(id, user.email);
@@ -57,7 +57,7 @@ export default function SharedView() {
 
         if (wishlistError || !wishlistData) {
           setError("Wishlist not found");
-          setLoading(false);
+          setWishlistLoading(false);
           return;
         }
 
@@ -67,13 +67,13 @@ export default function SharedView() {
         setError("You don't have access to this wishlist");
       }
 
-      setLoading(false);
+      setWishlistLoading(false);
     };
 
     fetchWishlist();
   }, [id, user, authLoading, getShareByWishlistAndEmail]);
 
-  const loading = itemsLoading || loading;
+  const loading = itemsLoading || wishlistLoading;
 
   const filteredItems =
     filter === "all"
