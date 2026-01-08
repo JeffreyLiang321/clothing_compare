@@ -1,58 +1,48 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const code = searchParams.get("code");
+      
+      // If no code, redirect to /auth immediately (no error screen)
       if (!code) {
-        setError("No authorization code found. Please try signing in again.");
-        setLoading(false);
+        console.warn("[AuthCallback] No authorization code found in URL, redirecting to /auth");
+        navigate("/auth", { replace: true });
         return;
       }
 
+      console.log("[AuthCallback] Exchanging code for session...");
+      
+      // Exchange code for session - wait for this to complete before any navigation
       const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      
       if (exchangeError) {
-        console.error("exchangeCodeForSession error:", exchangeError);
-        setError(`Authentication failed: ${exchangeError.message}`);
-        setLoading(false);
+        console.error("[AuthCallback] exchangeCodeForSession error:", exchangeError);
+        // On error, redirect to /auth instead of showing error screen
+        navigate("/auth", { replace: true });
         return;
       }
 
+      console.log("[AuthCallback] Session exchange successful, redirecting to /");
+      // Only navigate after successful exchange
       navigate("/", { replace: true });
     })();
   }, [navigate, searchParams]);
 
-  if (loading) {
-    return (
-      <div className="panel">
-        <div className="panel-body">
-          <div className="empty">Signing you in...</div>
-        </div>
+  // Show loading state while processing
+  return (
+    <div className="panel">
+      <div className="panel-body">
+        <div className="empty">Signing you in...</div>
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="panel">
-        <div className="panel-body" style={{ maxWidth: 500, margin: "0 auto" }}>
-          <h1>Authentication Error</h1>
-          <p style={{ color: "var(--muted)", marginBottom: 24 }}>{error}</p>
-          <Link to="/auth" className="button">
-            Go to Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
 

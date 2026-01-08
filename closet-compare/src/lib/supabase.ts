@@ -7,7 +7,12 @@ if (!supabaseUrl || !supabaseKey) {
   console.error("Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY");
 }
 
-export const supabase = createClient(
-  supabaseUrl || "",
-  supabaseKey || ""
-);
+// Create Supabase client - PKCE is the default flow for OAuth in v2+
+// Using redirectTo (query params) + exchangeCodeForSession() = PKCE flow
+export const supabase = createClient(supabaseUrl || "", supabaseKey || "", {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true, // Automatically detect session in URL
+  },
+});
