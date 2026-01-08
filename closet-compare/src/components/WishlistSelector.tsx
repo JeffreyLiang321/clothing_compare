@@ -17,54 +17,75 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
   const [creating, setCreating] = useState(false);
   const onWishlistChangeRef = useRef(onWishlistChange);
   const hasInitializedRef = useRef(false);
+  const hasRefetchedRef = useRef(false);
 
   // Keep the callback ref updated without causing re-renders
   useEffect(() => {
     onWishlistChangeRef.current = onWishlistChange;
   }, [onWishlistChange]);
 
+  // Reset initialization state when user changes
+  useEffect(() => {
+    hasInitializedRef.current = false;
+    hasRefetchedRef.current = false;
+    setActiveWishlistId(null);
+  }, [user?.id]);
+
   useEffect(() => {
     const initializeWishlists = async () => {
+      // Only run when loading completes and we haven't initialized yet
       if (!user || wishlistsLoading || hasInitializedRef.current) {
         return;
       }
 
+      // If wishlists is empty and we haven't done a defensive refetch yet, do it
+      // This ensures we have the latest data before creating a default
+      if (wishlists.length === 0 && !hasRefetchedRef.current) {
+        hasRefetchedRef.current = true;
+        await refetch();
+        // If refetch populated wishlists, let the effect re-run with the new data
+        return;
+      }
+
+      // Now we're confident the list is loaded (either populated or confirmed empty)
+      // Mark as initialized to prevent duplicate creation
       hasInitializedRef.current = true;
 
-      let wishlistsList = wishlists;
-
-      // Create default wishlist if none exist
-      if (wishlistsList.length === 0) {
+      // If still empty after refetch, create default wishlist
+      if (wishlists.length === 0) {
         try {
           const newWishlist = await createWishlist("My Wishlist");
-          wishlistsList = [newWishlist];
           await refetch();
+
+          const activeId = newWishlist.id;
+          setActiveWishlistId(activeId);
+          localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
+          if (onWishlistChangeRef.current) {
+            onWishlistChangeRef.current(activeId);
+          }
         } catch (error) {
           console.error("Error creating default wishlist:", error);
           hasInitializedRef.current = false;
-          return;
         }
+        return;
       }
 
-      // Set active wishlist from localStorage or first wishlist
+      // If wishlists exist, set active from localStorage or first wishlist
       const storedId = localStorage.getItem(ACTIVE_WISHLIST_KEY);
-      let activeId: string;
-
-      if (!storedId || !wishlistsList.find((w) => w.id === storedId)) {
-        activeId = wishlistsList[0].id;
-        localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
-      } else {
-        activeId = storedId;
-      }
+      const activeId =
+        storedId && wishlists.some((w) => w.id === storedId)
+          ? storedId
+          : wishlists[0].id;
 
       setActiveWishlistId(activeId);
+      localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
       if (onWishlistChangeRef.current) {
         onWishlistChangeRef.current(activeId);
       }
     };
 
     initializeWishlists();
-  }, [user, wishlists, wishlistsLoading, createWishlist, refetch]);
+  }, [user?.id, wishlistsLoading, wishlists.length, refetch, createWishlist]);
 
   const handleWishlistChange = (wishlistId: string) => {
     if (wishlistId === "new") {
