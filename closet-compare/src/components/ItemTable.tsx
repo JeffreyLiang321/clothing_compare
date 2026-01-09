@@ -261,24 +261,54 @@ function ItemRow({
           : `$${item.price.toFixed(2)}`}
       </td>
       <td>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            minHeight: 64,
+          }}
+        >
           {item.image_url && (
             <img
               src={item.image_url}
               alt={item.name || "Item"}
               style={{
-                width: 48,
-                height: 48,
+                width: 64,
+                height: 64,
+                minWidth: 64,
+                minHeight: 64,
                 objectFit: "cover",
                 borderRadius: 4,
                 border: "1px solid var(--border)",
+                flexShrink: 0,
               }}
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
           )}
-          <span>{item.name || <span style={{ color: "var(--muted)" }}>—</span>}</span>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              minWidth: 0,
+            }}
+          >
+            <span
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                lineHeight: 1.4,
+                wordBreak: "break-word",
+              }}
+            >
+              {item.name || <span style={{ color: "var(--muted)" }}>—</span>}
+            </span>
+          </div>
         </div>
       </td>
       <td>
