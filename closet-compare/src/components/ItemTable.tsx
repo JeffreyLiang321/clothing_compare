@@ -133,6 +133,35 @@ function ItemRow({
             style={{ width: "100%", minWidth: 110 }}
           />
         </td>
+        <td style={{ minWidth: 80, width: "auto" }}>
+          <input
+            type="url"
+            className="input"
+            value={editData.image_url}
+            onChange={(e) =>
+              setEditData({ ...editData, image_url: e.target.value })
+            }
+            placeholder="Image URL"
+            style={{ width: "100%", minWidth: 80, fontSize: 12 }}
+          />
+          {editData.image_url && (
+            <img
+              src={editData.image_url}
+              alt="Preview"
+              style={{
+                width: 64,
+                height: 64,
+                objectFit: "cover",
+                borderRadius: 4,
+                border: "1px solid var(--border)",
+                marginTop: 8,
+              }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
+        </td>
         <td style={{ minWidth: 140, width: "auto" }}>
           <input
             type="text"
@@ -143,16 +172,6 @@ function ItemRow({
             }
             placeholder="Item name"
             style={{ width: "100%", minWidth: 140 }}
-          />
-          <input
-            type="url"
-            className="input"
-            value={editData.image_url}
-            onChange={(e) =>
-              setEditData({ ...editData, image_url: e.target.value })
-            }
-            placeholder="Image URL (optional)"
-            style={{ width: "100%", minWidth: 140, marginTop: 8, fontSize: 12 }}
           />
         </td>
         <td style={{ minWidth: 140, width: "auto" }}>
@@ -261,55 +280,27 @@ function ItemRow({
           : `$${item.price.toFixed(2)}`}
       </td>
       <td>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            minHeight: 64,
-          }}
-        >
-          {item.image_url && (
-            <img
-              src={item.image_url}
-              alt={item.name || "Item"}
-              style={{
-                width: 64,
-                height: 64,
-                minWidth: 64,
-                minHeight: 64,
-                objectFit: "cover",
-                borderRadius: 4,
-                border: "1px solid var(--border)",
-                flexShrink: 0,
-              }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          )}
-          <div
+        {item.image_url ? (
+          <img
+            src={item.image_url}
+            alt={item.name || "Item"}
             style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              minWidth: 0,
+              width: 64,
+              height: 64,
+              objectFit: "cover",
+              borderRadius: 4,
+              border: "1px solid var(--border)",
             }}
-          >
-            <span
-              style={{
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                lineHeight: 1.4,
-                wordBreak: "break-word",
-              }}
-            >
-              {item.name || <span style={{ color: "var(--muted)" }}>—</span>}
-            </span>
-          </div>
-        </div>
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <span style={{ color: "var(--muted)" }}>—</span>
+        )}
+      </td>
+      <td>
+        {item.name || <span style={{ color: "var(--muted)" }}>—</span>}
       </td>
       <td>
         <span className={getStatusClass(item.status || "considering")}>
@@ -389,6 +380,7 @@ export default function ItemTable({ items, onDelete, onUpdate, readOnly }: Props
           <tr>
             <th style={{ minWidth: 140 }}>Store</th>
             <th style={{ minWidth: 110 }}>Price</th>
+            <th style={{ minWidth: 80 }}>Image</th>
             <th style={{ minWidth: 140 }}>Name</th>
             <th style={{ minWidth: 140 }}>Status</th>
             <th style={{ minWidth: 180 }}>Tags</th>
