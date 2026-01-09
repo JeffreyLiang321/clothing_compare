@@ -99,6 +99,21 @@ export function useWishlists(userId: string | null) {
     return data as Wishlist;
   };
 
+  const getWishlistById = async (wishlistId: string) => {
+    const { data, error: fetchError } = await supabase
+      .from("wishlists")
+      .select("*")
+      .eq("id", wishlistId)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching wishlist by ID:", fetchError);
+      throw fetchError;
+    }
+
+    return data as Wishlist;
+  };
+
   const refetch = async () => {
     if (!userId) return;
 
@@ -128,6 +143,7 @@ export function useWishlists(userId: string | null) {
     createWishlist,
     getWishlist,
     getWishlistByToken,
+    getWishlistById,
     refetch,
   };
 }

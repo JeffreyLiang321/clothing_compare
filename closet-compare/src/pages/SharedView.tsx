@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
+import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
 import type { Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
@@ -16,6 +16,8 @@ export default function SharedView() {
   const { user, loading: authLoading } = useAuth();
   const { items, loading: itemsLoading } = useItems(id || null);
   const { getShareByWishlistAndEmail } = useWishlistShares(null, null);
+  const { getWishlistById } = useWishlists(null);
+  const { createItem } = useItems(getActiveWishlistId());
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [wishlistLoading, setWishlistLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,36 +76,9 @@ export default function SharedView() {
         await getShareByWishlistAndEmail(id, user.email);
 
         console.log("[SharedView] Share access confirmed, fetching wishlist data...");
-        const { data: wishlistData, error: wishlistError } = await supabase
-          .from("wishlists")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (wishlistError) {
-          console.error(
-            "[SharedView] Error fetching wishlist:",
-            {
-              wishlist_id: id,
-              error: wishlistError,
-              table: "wishlists",
-              filter: `id = ${id}`,
-            }
-          );
-          setError("Wishlist not found");
-          setWishlist(null);
-          return;
-        }
-
-        if (!wishlistData) {
-          console.warn("[SharedView] Wishlist not found:", id);
-          setError("Wishlist not found");
-          setWishlist(null);
-          return;
-        }
-
+        const wishlistData = await getWishlistById(id);
         console.log("[SharedView] Successfully loaded wishlist:", wishlistData.name);
-        setWishlist(wishlistData as Wishlist);
+        setWishlist(wishlistData);
       } catch (error: any) {
         console.error(
           "[SharedView] Error fetching shared wishlist:",
@@ -111,11 +86,15 @@ export default function SharedView() {
             error,
             wishlist_id: id,
             email: user.email,
-            table: "wishlist_shares",
-            filter: `wishlist_id = ${id} AND shared_with_email ilike ${user.email}`,
+            table: "wishlist_shares or wishlists",
           }
         );
-        setError("You don't have access to this wishlist");
+        // Check if it's an access error or wishlist not found error
+        if (error?.message?.includes("No rows") || error?.code === "PGRST116") {
+          setError("Wishlist not found");
+        } else {
+          setError("You don't have access to this wishlist");
+        }
         setWishlist(null);
       } finally {
         // ALWAYS set loading to false, regardless of success or error
@@ -163,25 +142,24 @@ export default function SharedView() {
     setCopyMessage(null);
 
     try {
-      const itemsToInsert = items.map((item) => ({
-        url: item.url,
-        store: item.store,
-        name: item.name,
-        price: item.price,
-        notes: item.notes,
-        tags: item.tags,
-        status: item.status,
-        decision_reason: item.decision_reason,
-        image_url: item.image_url,
-        user_id: user.id,
-        wishlist_id: activeWishlistId,
-      }));
-
-      const { error } = await supabase.from("items").insert(itemsToInsert);
-
-      if (error) {
-        throw error;
-      }
+      // Copy items one by one using the hook
+      await Promise.all(
+        items.map((item) =>
+          createItem({
+            url: item.url,
+            store: item.store,
+            name: item.name,
+            price: item.price,
+            notes: item.notes,
+            tags: item.tags,
+            status: item.status,
+            decision_reason: item.decision_reason,
+            image_url: item.image_url,
+            user_id: user.id,
+            wishlist_id: activeWishlistId,
+          })
+        )
+      );
 
       setCopyMessage(`Copied ${items.length} item(s) to your cart!`);
     } catch (error) {

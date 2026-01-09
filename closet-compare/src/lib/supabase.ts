@@ -16,3 +16,9 @@ export const supabase = createClient(supabaseUrl || "", supabaseKey || "", {
     detectSessionInUrl: true, // Automatically detect session in URL
   },
 });
+
+/**
+ * Get the authentication callback URL for OAuth and magic link flows.
+ * Ensures both OAuth (redirectTo) and magic link (emailRedirectTo) use the same callback URL.
+ */
+export const getAuthRedirectUrl = () => `${window.location.origin}/auth/callback`;

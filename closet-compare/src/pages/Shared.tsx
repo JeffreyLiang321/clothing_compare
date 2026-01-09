@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
+import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
 import type { WishlistShare, Wishlist } from "../types";
 
@@ -9,6 +9,7 @@ export default function Shared() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { getSharesByEmail } = useWishlistShares(null, null);
+  const { getWishlistById } = useWishlists(null);
   const [shares, setShares] = useState<
     Array<WishlistShare & { wishlist: Wishlist }>
   >([]);
@@ -58,36 +59,11 @@ export default function Shared() {
         const sharesWithWishlists = await Promise.all(
           sharesData.map(async (share) => {
             try {
-              // For shared wishlists, we need to fetch without user_id check
-              // So we'll use a direct query here
-              const { data: wishlistData, error: wishlistError } = await supabase
-                .from("wishlists")
-                .select("*")
-                .eq("id", share.wishlist_id)
-                .single();
-
-              if (wishlistError) {
-                console.error(
-                  "[Shared] Error fetching wishlist:",
-                  {
-                    wishlist_id: share.wishlist_id,
-                    error: wishlistError,
-                    table: "wishlists",
-                    filter: `id = ${share.wishlist_id}`,
-                  }
-                );
-                return null;
-              }
-
-              if (!wishlistData) {
-                console.warn("[Shared] Wishlist not found:", share.wishlist_id);
-                return null;
-              }
-
-              return { ...share, wishlist: wishlistData as Wishlist };
+              const wishlistData = await getWishlistById(share.wishlist_id);
+              return { ...share, wishlist: wishlistData };
             } catch (error) {
               console.error(
-                "[Shared] Error fetching wishlist (exception):",
+                "[Shared] Error fetching wishlist:",
                 {
                   wishlist_id: share.wishlist_id,
                   error,
