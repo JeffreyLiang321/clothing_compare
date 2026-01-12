@@ -114,6 +114,86 @@ export function useWishlists(userId: string | null) {
     return data as Wishlist;
   };
 
+  const renameWishlist = async (wishlistId: string, newName: string) => {
+    if (!userId) throw new Error("User ID is required");
+
+    // Validate: trim and check non-empty
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      throw new Error("Cart name cannot be empty");
+    }
+
+    // Find the current wishlist
+    const currentWishlist = wishlists.find((w) => w.id === wishlistId);
+    if (!currentWishlist) {
+      throw new Error("Wishlist not found");
+    }
+
+    // Check if unchanged (case-insensitive comparison)
+    if (currentWishlist.name.trim().toLowerCase() === trimmedName.toLowerCase()) {
+      // No change, return early
+      return currentWishlist;
+    }
+
+    // Check for case-insensitive duplicates (excluding current wishlist)
+    const normalizedNewName = trimmedName.toLowerCase();
+    const duplicate = wishlists.find(
+      (w) =>
+        w.id !== wishlistId &&
+        w.name.trim().toLowerCase() === normalizedNewName
+    );
+
+    if (duplicate) {
+      throw new Error(`A cart named "${trimmedName}" already exists`);
+    }
+
+    // Optimistic update: update local state immediately
+    const previousWishlists = [...wishlists];
+    setWishlists((prev) =>
+      prev.map((w) =>
+        w.id === wishlistId ? { ...w, name: trimmedName } : w
+      )
+    );
+
+    try {
+      // Update in database
+      const { data, error: updateError } = await supabase
+        .from("wishlists")
+        .update({ name: trimmedName })
+        .eq("id", wishlistId)
+        .eq("user_id", userId)
+        .select()
+        .single();
+
+      if (updateError) {
+        // Rollback optimistic update on error
+        setWishlists(previousWishlists);
+
+        // Check if it's a unique constraint violation
+        if (updateError.code === "23505" || updateError.message.includes("unique")) {
+          throw new Error(`A cart named "${trimmedName}" already exists`);
+        }
+
+        console.error("Error renaming wishlist:", updateError);
+        throw updateError;
+      }
+
+      // Update with the actual data from database
+      if (data) {
+        setWishlists((prev) =>
+          prev.map((w) => (w.id === wishlistId ? (data as Wishlist) : w))
+        );
+        return data as Wishlist;
+      }
+
+      return currentWishlist;
+    } catch (error: any) {
+      // Rollback optimistic update on any error
+      setWishlists(previousWishlists);
+      throw error;
+    }
+  };
+
   const refetch = async () => {
     if (!userId) return;
 
@@ -144,6 +224,7 @@ export function useWishlists(userId: string | null) {
     getWishlist,
     getWishlistByToken,
     getWishlistById,
+    renameWishlist,
     refetch,
   };
 }

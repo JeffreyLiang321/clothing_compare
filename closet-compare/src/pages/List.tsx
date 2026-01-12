@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
@@ -13,7 +13,6 @@ type FilterStatus = "all" | "considering" | "bought" | "dropped";
 export default function List() {
   const { user } = useAuth();
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
-  const [wishlist, setWishlist] = useState<{ name: string } | null>(null);
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
     "newest"
   );
@@ -23,7 +22,7 @@ export default function List() {
   const [accountShareMessage, setAccountShareMessage] = useState<string | null>(null);
 
   const { items, loading: itemsLoading, updateItem, deleteItem } = useItems(activeWishlistId);
-  const { getWishlist } = useWishlists(user?.id || null);
+  const { wishlists } = useWishlists(user?.id || null);
   const { shares: accountShares, loading: sharesLoading, createShare, deleteShare } = useWishlistShares(
     activeWishlistId,
     user?.id || null
@@ -31,24 +30,10 @@ export default function List() {
 
   const loading = itemsLoading || sharesLoading;
 
-  useEffect(() => {
-    const loadWishlist = async () => {
-      if (!user || !activeWishlistId) {
-        setWishlist(null);
-        return;
-      }
-
-      try {
-        const wishlistData = await getWishlist(activeWishlistId, user.id);
-        setWishlist({ name: wishlistData.name });
-      } catch (error) {
-        console.error("Error loading wishlist:", error);
-        setWishlist(null);
-      }
-    };
-
-    loadWishlist();
-  }, [user, activeWishlistId, getWishlist]);
+  // Get the current wishlist name from the wishlists array (automatically updates on rename)
+  const wishlist = activeWishlistId
+    ? wishlists.find((w) => w.id === activeWishlistId) || null
+    : null;
 
   const handleWishlistChange = (wishlistId: string) => {
     setActiveWishlistId(wishlistId);

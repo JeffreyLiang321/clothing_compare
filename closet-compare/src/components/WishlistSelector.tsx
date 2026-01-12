@@ -10,11 +10,16 @@ type Props = {
 
 export default function WishlistSelector({ onWishlistChange }: Props) {
   const { user } = useAuth();
-  const { wishlists, loading: wishlistsLoading, createWishlist, refetch } = useWishlists(user?.id || null);
+  const { wishlists, loading: wishlistsLoading, createWishlist, renameWishlist, refetch } = useWishlists(user?.id || null);
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCartName, setNewCartName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editingWishlistId, setEditingWishlistId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const editInputRef = useRef<HTMLInputElement>(null);
   const onWishlistChangeRef = useRef(onWishlistChange);
   const hasInitializedRef = useRef(false);
   const hasRefetchedRef = useRef(false);
@@ -148,6 +153,59 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
     setCreating(false);
   };
 
+  const handleStartEdit = (wishlistId: string, currentName: string) => {
+    setEditingWishlistId(wishlistId);
+    setEditingName(currentName);
+    setRenameError(null);
+    // Focus input after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      editInputRef.current?.focus();
+      editInputRef.current?.select();
+    }, 0);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingWishlistId(null);
+    setEditingName("");
+    setRenameError(null);
+  };
+
+  const handleSaveEdit = async (wishlistId: string) => {
+    if (!user) return;
+
+    const trimmedName = editingName.trim();
+    if (!trimmedName) {
+      setRenameError("Cart name cannot be empty");
+      return;
+    }
+
+    setRenaming(true);
+    setRenameError(null);
+
+    try {
+      await renameWishlist(wishlistId, trimmedName);
+      setEditingWishlistId(null);
+      setEditingName("");
+      // Refetch to ensure all components have the latest data
+      await refetch();
+    } catch (error: any) {
+      console.error("Error renaming wishlist:", error);
+      setRenameError(error.message || "Failed to rename cart");
+    }
+
+    setRenaming(false);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent, wishlistId: string) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveEdit(wishlistId);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelEdit();
+    }
+  };
+
   if (wishlistsLoading) {
     return (
       <select className="select" disabled style={{ minWidth: 200 }}>
@@ -158,19 +216,126 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
 
   return (
     <>
-      <select
-        className="select"
-        value={activeWishlistId || ""}
-        onChange={(e) => handleWishlistChange(e.target.value)}
-        style={{ minWidth: 200 }}
-      >
-        {wishlists.map((wishlist) => (
-          <option key={wishlist.id} value={wishlist.id}>
-            {wishlist.name}
-          </option>
-        ))}
-        <option value="new">+ New cart</option>
-      </select>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <select
+          className="select"
+          value={activeWishlistId || ""}
+          onChange={(e) => handleWishlistChange(e.target.value)}
+          style={{ minWidth: 200 }}
+        >
+          {wishlists.map((wishlist) => (
+            <option key={wishlist.id} value={wishlist.id}>
+              {wishlist.name}
+            </option>
+          ))}
+          <option value="new">+ New cart</option>
+        </select>
+
+        {activeWishlistId && wishlists.some((w) => w.id === activeWishlistId) && (
+          <button
+            type="button"
+            onClick={() => {
+              const wishlist = wishlists.find((w) => w.id === activeWishlistId);
+              if (wishlist) {
+                handleStartEdit(wishlist.id, wishlist.name);
+              }
+            }}
+            disabled={editingWishlistId !== null}
+            style={{
+              padding: "8px 12px",
+              fontSize: 14,
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              cursor: editingWishlistId !== null ? "not-allowed" : "pointer",
+              color: "var(--text)",
+              opacity: editingWishlistId !== null ? 0.5 : 1,
+            }}
+            title="Rename cart"
+          >
+            ✏️
+          </button>
+        )}
+      </div>
+
+      {editingWishlistId && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={handleCancelEdit}
+        >
+          <div
+            className="panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 400, width: "90%" }}
+          >
+            <div className="panel-body">
+              <h2 style={{ marginBottom: 16 }}>Rename Cart</h2>
+              <div style={{ marginBottom: 16 }}>
+                <label className="label" htmlFor="rename-cart-name">
+                  Cart Name
+                </label>
+                <input
+                  id="rename-cart-name"
+                  ref={editInputRef}
+                  type="text"
+                  className="input"
+                  value={editingName}
+                  onChange={(e) => {
+                    setEditingName(e.target.value);
+                    setRenameError(null);
+                  }}
+                  onKeyDown={(e) => handleEditKeyDown(e, editingWishlistId)}
+                  placeholder="e.g., Summer Clothes"
+                  disabled={renaming}
+                  style={{
+                    borderColor: renameError ? "#991b1b" : undefined,
+                  }}
+                />
+                {renameError && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 14,
+                      color: "#991b1b",
+                    }}
+                  >
+                    {renameError}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={handleCancelEdit}
+                  disabled={renaming}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => handleSaveEdit(editingWishlistId)}
+                  disabled={renaming || !editingName.trim()}
+                >
+                  {renaming ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCreateModal && (
         <div
