@@ -10,7 +10,7 @@ type Props = {
 
 export default function WishlistSelector({ onWishlistChange }: Props) {
   const { user } = useAuth();
-  const { wishlists, loading: wishlistsLoading, createWishlist, renameWishlist, refetch } = useWishlists(user?.id || null);
+  const { wishlists, loading: wishlistsLoading, error: wishlistsError, createWishlist, renameWishlist, refetch } = useWishlists(user?.id || null);
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCartName, setNewCartName] = useState("");
@@ -22,7 +22,6 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
   const editInputRef = useRef<HTMLInputElement>(null);
   const onWishlistChangeRef = useRef(onWishlistChange);
   const hasInitializedRef = useRef(false);
-  const hasRefetchedRef = useRef(false);
 
   // Keep the callback ref updated without causing re-renders
   useEffect(() => {
@@ -32,50 +31,30 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
   // Reset initialization state when user changes
   useEffect(() => {
     hasInitializedRef.current = false;
-    hasRefetchedRef.current = false;
     setActiveWishlistId(null);
   }, [user?.id]);
 
   useEffect(() => {
     const initializeWishlists = async () => {
-      console.log("[WishlistSelector] initializeWishlists called", {
-        user: user?.id,
-        wishlistsLoading,
-        hasInitialized: hasInitializedRef.current,
-        wishlistsCount: wishlists.length,
-        hasRefetched: hasRefetchedRef.current,
-        wishlistIds: wishlists.map((w) => w.id),
-      });
-
       // Only run when loading completes and we haven't initialized yet
       if (!user || wishlistsLoading || hasInitializedRef.current) {
-        console.log("[WishlistSelector] Early return:", {
-          noUser: !user,
-          loading: wishlistsLoading,
-          initialized: hasInitializedRef.current,
-        });
         return;
       }
 
-      // If wishlists is empty and we haven't done a defensive refetch yet, do it
-      // This ensures we have the latest data before creating a default
-      if (wishlists.length === 0 && !hasRefetchedRef.current) {
-        console.log("[WishlistSelector] Doing defensive refetch (wishlists is empty)");
-        hasRefetchedRef.current = true;
-        await refetch();
-        console.log("[WishlistSelector] Defensive refetch completed, effect will re-run");
-        // If refetch populated wishlists, let the effect re-run with the new data
+      // If there's an error, don't attempt to create default wishlist
+      // Mark as initialized to prevent retry loops
+      if (wishlistsError) {
+        console.error("[WishlistSelector] Error fetching wishlists, skipping initialization:", wishlistsError);
+        hasInitializedRef.current = true;
         return;
       }
 
-      // Now we're confident the list is loaded (either populated or confirmed empty)
-      // Mark as initialized to prevent duplicate creation
-      hasInitializedRef.current = true;
-      console.log("[WishlistSelector] Marked as initialized. Current wishlists count:", wishlists.length);
-
-      // If still empty after refetch, create default wishlist
+      // Only create default wishlist if fetch was successful AND wishlists.length === 0
       if (wishlists.length === 0) {
-        console.log("[WishlistSelector] Creating default 'My Wishlist' (confirmed empty after refetch)");
+        console.log("[WishlistSelector] Creating default 'My Wishlist' (confirmed empty after successful fetch)");
+        // Mark as initialized BEFORE attempting creation to prevent loops
+        hasInitializedRef.current = true;
+        
         try {
           const newWishlist = await createWishlist("My Wishlist");
           console.log("[WishlistSelector] Created default wishlist:", newWishlist.id);
@@ -89,20 +68,19 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
           }
         } catch (error) {
           console.error("Error creating default wishlist:", error);
-          hasInitializedRef.current = false;
+          // Don't reset hasInitializedRef - we've already tried once
         }
         return;
       }
 
       // If wishlists exist, set active from localStorage or first wishlist
-      console.log("[WishlistSelector] Wishlists exist, setting active wishlist. Available:", wishlists.map((w) => ({ id: w.id, name: w.name })));
+      hasInitializedRef.current = true;
       const storedId = localStorage.getItem(ACTIVE_WISHLIST_KEY);
       const activeId =
         storedId && wishlists.some((w) => w.id === storedId)
           ? storedId
           : wishlists[0].id;
 
-      console.log("[WishlistSelector] Setting active wishlist:", activeId);
       setActiveWishlistId(activeId);
       localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
       if (onWishlistChangeRef.current) {
@@ -111,7 +89,7 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
     };
 
     initializeWishlists();
-  }, [user?.id, wishlistsLoading, wishlists.length, refetch, createWishlist]);
+  }, [user?.id, wishlistsLoading, wishlists.length, wishlistsError, refetch, createWishlist]);
 
   const handleWishlistChange = (wishlistId: string) => {
     if (wishlistId === "new") {
@@ -211,6 +189,26 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
       <select className="select" disabled style={{ minWidth: 200 }}>
         <option>Loading...</option>
       </select>
+    );
+  }
+
+  if (wishlistsError) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 200 }}>
+        <div style={{ fontSize: 14, color: "#991b1b", padding: "8px 12px", background: "#fee2e2", borderRadius: 6 }}>
+          Failed to load wishlists
+        </div>
+        <button
+          type="button"
+          className="button"
+          onClick={async () => {
+            await refetch();
+          }}
+          style={{ fontSize: 14, padding: "8px 12px" }}
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
