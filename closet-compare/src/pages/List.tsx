@@ -3,6 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
+import { useProfile } from "../hooks/useProfile";
 import type { Item } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
@@ -17,7 +18,7 @@ export default function List() {
     "newest"
   );
   const [filter, setFilter] = useState<FilterStatus>("all");
-  const [accountShareEmail, setAccountShareEmail] = useState("");
+  const [accountShareUsername, setAccountShareUsername] = useState("");
   const [accountShareLoading, setAccountShareLoading] = useState(false);
   const [accountShareMessage, setAccountShareMessage] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export default function List() {
     activeWishlistId,
     user?.id || null
   );
+  const { findUserIdByUsername } = useProfile(null);
 
   const loading = itemsLoading || sharesLoading;
 
@@ -41,16 +43,11 @@ export default function List() {
 
   const handleAccountShare = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeWishlistId || !user || !user.email) return;
+    if (!activeWishlistId || !user) return;
 
-    const email = accountShareEmail.trim().toLowerCase();
-    if (!email) {
-      setAccountShareMessage("Please enter an email address");
-      return;
-    }
-
-    if (email === user.email.toLowerCase()) {
-      setAccountShareMessage("You cannot share with yourself");
+    const username = accountShareUsername.trim().toLowerCase();
+    if (!username) {
+      setAccountShareMessage("Please enter a username");
       return;
     }
 
@@ -58,14 +55,33 @@ export default function List() {
     setAccountShareMessage(null);
 
     try {
+      // Find user by username
+      const recipientUserId = await findUserIdByUsername(username);
+
+      // Check if sharing with self
+      if (recipientUserId === user.id) {
+        setAccountShareMessage("You cannot share with yourself");
+        setAccountShareLoading(false);
+        return;
+      }
+
+      // Check if already shared
+      const alreadyShared = accountShares.some(
+        (share) => share.recipient_user_id === recipientUserId
+      );
+      if (alreadyShared) {
+        setAccountShareMessage("Wishlist is already shared with this user");
+        setAccountShareLoading(false);
+        return;
+      }
+
       await createShare({
         wishlist_id: activeWishlistId,
         owner_id: user.id,
-        owner_email: user.email,
-        shared_with_email: email,
+        recipient_user_id: recipientUserId,
       });
 
-      setAccountShareEmail("");
+      setAccountShareUsername("");
       setAccountShareMessage("Wishlist shared successfully!");
       setTimeout(() => setAccountShareMessage(null), 3000);
     } catch (error: any) {
@@ -167,11 +183,17 @@ export default function List() {
           <form onSubmit={handleAccountShare} style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
               <input
-                type="email"
+                type="text"
                 className="input"
-                value={accountShareEmail}
-                onChange={(e) => setAccountShareEmail(e.target.value)}
-                placeholder="recipient@email.com"
+                value={accountShareUsername}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase();
+                  // Only allow lowercase letters, numbers, and underscores
+                  if (value === "" || /^[a-z0-9_]*$/.test(value)) {
+                    setAccountShareUsername(value);
+                  }
+                }}
+                placeholder="username"
                 required
                 disabled={accountShareLoading}
                 style={{ flex: 1 }}
@@ -227,7 +249,9 @@ export default function List() {
                       borderRadius: 6,
                     }}
                   >
-                    <span style={{ fontSize: 14 }}>{share.shared_with_email}</span>
+                    <span style={{ fontSize: 14 }}>
+                      @{share.recipient_username || "unknown"}
+                    </span>
                     <button
                       type="button"
                       className="button secondary"

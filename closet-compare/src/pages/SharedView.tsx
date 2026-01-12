@@ -15,7 +15,7 @@ export default function SharedView() {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const { items, loading: itemsLoading } = useItems(id || null);
-  const { getShareByWishlistAndEmail } = useWishlistShares(null, null);
+  const { getShareByWishlistAndUserId } = useWishlistShares(null, null);
   const { getWishlistById } = useWishlists(null);
   const { createItem } = useItems(getActiveWishlistId());
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
@@ -47,7 +47,7 @@ export default function SharedView() {
         return;
       }
 
-      if (!user?.email) {
+      if (!user?.id) {
         setError("You must be signed in to view shared wishlists");
         setWishlistLoading(false);
         setWishlist(null);
@@ -72,8 +72,8 @@ export default function SharedView() {
       setError(null);
 
       try {
-        console.log("[SharedView] Fetching share access for wishlist:", id, "email:", user.email);
-        await getShareByWishlistAndEmail(id, user.email);
+        console.log("[SharedView] Fetching share access for wishlist:", id, "user ID:", user.id);
+        await getShareByWishlistAndUserId(id, user.id);
 
         console.log("[SharedView] Share access confirmed, fetching wishlist data...");
         const wishlistData = await getWishlistById(id);
@@ -85,7 +85,7 @@ export default function SharedView() {
           {
             error,
             wishlist_id: id,
-            email: user.email,
+            userId: user.id,
             table: "wishlist_shares or wishlists",
           }
         );
@@ -104,9 +104,9 @@ export default function SharedView() {
     };
 
     fetchWishlist();
-    // Only depend on id and user.email, not the entire user object or getShareByWishlistAndEmail function
+    // Only depend on id and user.id, not the entire user object or getShareByWishlistAndUserId function
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, user?.email, authLoading]);
+  }, [id, user?.id, authLoading]);
 
   const loading = itemsLoading || wishlistLoading;
 

@@ -18,7 +18,8 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      // Fetch shares and join with profiles to get usernames
+      const { data: sharesData, error: fetchError } = await supabase
         .from("wishlist_shares")
         .select("*")
         .eq("wishlist_id", wishlistId)
@@ -30,7 +31,29 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
         setError(fetchError.message);
         setShares([]);
       } else {
-        setShares(data || []);
+        // Fetch usernames for owner and recipients
+        const userIds = new Set<string>();
+        (sharesData || []).forEach((share: any) => {
+          userIds.add(share.owner_id);
+          userIds.add(share.recipient_user_id);
+        });
+
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", Array.from(userIds));
+
+        const profilesMap = new Map(
+          (profilesData || []).map((p: any) => [p.id, p.username])
+        );
+
+        // Transform the data to include usernames
+        const transformedShares = (sharesData || []).map((share: any) => ({
+          ...share,
+          owner_username: profilesMap.get(share.owner_id),
+          recipient_username: profilesMap.get(share.recipient_user_id),
+        }));
+        setShares(transformedShares as WishlistShare[]);
       }
 
       setLoading(false);
@@ -42,8 +65,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
   const createShare = async (data: {
     wishlist_id: string;
     owner_id: string;
-    owner_email: string;
-    shared_with_email: string;
+    recipient_user_id: string;
   }) => {
     const { data: shareData, error: createError } = await supabase
       .from("wishlist_shares")
@@ -57,7 +79,23 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     }
 
     if (shareData) {
-      setShares((prev) => [shareData as WishlistShare, ...prev]);
+      // Fetch usernames for the new share
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", [shareData.owner_id, shareData.recipient_user_id]);
+
+      const profilesMap = new Map(
+        (profilesData || []).map((p: any) => [p.id, p.username])
+      );
+
+      const transformedShare = {
+        ...shareData,
+        owner_username: profilesMap.get(shareData.owner_id),
+        recipient_username: profilesMap.get(shareData.recipient_user_id),
+      };
+      setShares((prev) => [transformedShare as WishlistShare, ...prev]);
+      return transformedShare as WishlistShare;
     }
 
     return shareData as WishlistShare;
@@ -79,26 +117,48 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     setShares((prev) => prev.filter((share) => share.id !== shareId));
   };
 
-  const getSharesByEmail = async (email: string) => {
-    const { data, error: fetchError } = await supabase
+  const getSharesByUserId = async (userId: string) => {
+    const { data: sharesData, error: fetchError } = await supabase
       .from("wishlist_shares")
       .select("*")
-      .ilike("shared_with_email", email);
+      .eq("recipient_user_id", userId);
 
     if (fetchError) {
-      console.error("Error fetching shares by email:", fetchError);
+      console.error("Error fetching shares by user ID:", fetchError);
       throw fetchError;
     }
 
-    return (data || []) as WishlistShare[];
+    // Fetch usernames for owners
+    const ownerIds = new Set<string>();
+    (sharesData || []).forEach((share: any) => {
+      ownerIds.add(share.owner_id);
+    });
+
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", Array.from(ownerIds));
+
+    const profilesMap = new Map(
+      (profilesData || []).map((p: any) => [p.id, p.username])
+    );
+
+    // Transform the data to include usernames
+    const transformedShares = (sharesData || []).map((share: any) => ({
+      ...share,
+      owner_username: profilesMap.get(share.owner_id),
+      recipient_username: profilesMap.get(share.recipient_user_id),
+    }));
+
+    return transformedShares as WishlistShare[];
   };
 
-  const getShareByWishlistAndEmail = async (wishlistId: string, email: string) => {
+  const getShareByWishlistAndUserId = async (wishlistId: string, userId: string) => {
     const { data, error: fetchError } = await supabase
       .from("wishlist_shares")
       .select("*")
       .eq("wishlist_id", wishlistId)
-      .ilike("shared_with_email", email)
+      .eq("recipient_user_id", userId)
       .single();
 
     if (fetchError) {
@@ -106,7 +166,23 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       throw fetchError;
     }
 
-    return data as WishlistShare;
+    // Fetch usernames
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", [data.owner_id, data.recipient_user_id]);
+
+    const profilesMap = new Map(
+      (profilesData || []).map((p: any) => [p.id, p.username])
+    );
+
+    const transformedShare = {
+      ...data,
+      owner_username: profilesMap.get(data.owner_id),
+      recipient_username: profilesMap.get(data.recipient_user_id),
+    };
+
+    return transformedShare as WishlistShare;
   };
 
   const refetch = async () => {
@@ -115,7 +191,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     setLoading(true);
     setError(null);
 
-    const { data, error: fetchError } = await supabase
+    const { data: sharesData, error: fetchError } = await supabase
       .from("wishlist_shares")
       .select("*")
       .eq("wishlist_id", wishlistId)
@@ -126,7 +202,29 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       console.error("Error fetching shares:", fetchError);
       setError(fetchError.message);
     } else {
-      setShares(data || []);
+      // Fetch usernames
+      const userIds = new Set<string>();
+      (sharesData || []).forEach((share: any) => {
+        userIds.add(share.owner_id);
+        userIds.add(share.recipient_user_id);
+      });
+
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", Array.from(userIds));
+
+      const profilesMap = new Map(
+        (profilesData || []).map((p: any) => [p.id, p.username])
+      );
+
+      // Transform the data to include usernames
+      const transformedShares = (sharesData || []).map((share: any) => ({
+        ...share,
+        owner_username: profilesMap.get(share.owner_id),
+        recipient_username: profilesMap.get(share.recipient_user_id),
+      }));
+      setShares(transformedShares as WishlistShare[]);
     }
 
     setLoading(false);
@@ -138,8 +236,8 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     error,
     createShare,
     deleteShare,
-    getSharesByEmail,
-    getShareByWishlistAndEmail,
+    getSharesByUserId,
+    getShareByWishlistAndUserId,
     refetch,
   };
 }

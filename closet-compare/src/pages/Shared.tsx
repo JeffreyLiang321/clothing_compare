@@ -8,7 +8,7 @@ import type { WishlistShare, Wishlist } from "../types";
 export default function Shared() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { getSharesByEmail } = useWishlistShares(null, null);
+  const { getSharesByUserId } = useWishlistShares(null, null);
   const { getWishlistById } = useWishlists(null);
   const [shares, setShares] = useState<
     Array<WishlistShare & { wishlist: Wishlist }>
@@ -16,38 +16,38 @@ export default function Shared() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
-  const lastFetchedEmailRef = useRef<string | null>(null);
+  const lastFetchedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchSharedWishlists = async () => {
       // Don't enter loading state if user is not available
-      if (!user?.email) {
+      if (!user?.id) {
         setLoading(false);
         setError(null);
         setShares([]);
         isFetchingRef.current = false;
-        lastFetchedEmailRef.current = null;
+        lastFetchedUserIdRef.current = null;
         return;
       }
 
-      // If email changed, reset the last fetched email to allow new fetch
-      if (lastFetchedEmailRef.current && lastFetchedEmailRef.current !== user.email) {
-        lastFetchedEmailRef.current = null;
+      // If user ID changed, reset the last fetched user ID to allow new fetch
+      if (lastFetchedUserIdRef.current && lastFetchedUserIdRef.current !== user.id) {
+        lastFetchedUserIdRef.current = null;
       }
 
-      // Prevent duplicate fetches - if already fetching or already fetched this email, skip
-      if (isFetchingRef.current || lastFetchedEmailRef.current === user.email) {
+      // Prevent duplicate fetches - if already fetching or already fetched this user ID, skip
+      if (isFetchingRef.current || lastFetchedUserIdRef.current === user.id) {
         return;
       }
 
       isFetchingRef.current = true;
-      lastFetchedEmailRef.current = user.email;
+      lastFetchedUserIdRef.current = user.id;
       setLoading(true);
       setError(null);
 
       try {
-        console.log("[Shared] Fetching shares for email:", user.email);
-        const sharesData = await getSharesByEmail(user.email);
+        console.log("[Shared] Fetching shares for user ID:", user.id);
+        const sharesData = await getSharesByUserId(user.id);
 
         if (!sharesData || sharesData.length === 0) {
           console.log("[Shared] No shares found");
@@ -87,9 +87,9 @@ export default function Shared() {
           "[Shared] Error fetching shared wishlists:",
           {
             error,
-            email: user.email,
+            userId: user.id,
             table: "wishlist_shares",
-            filter: `shared_with_email ilike ${user.email}`,
+            filter: `recipient_user_id = ${user.id}`,
           }
         );
         setError(
@@ -104,9 +104,9 @@ export default function Shared() {
     };
 
     fetchSharedWishlists();
-    // Only depend on user.email, not the entire user object or getSharesByEmail function
+    // Only depend on user.id, not the entire user object or getSharesByUserId function
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email]);
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -194,7 +194,7 @@ export default function Shared() {
                     color: "var(--muted)",
                   }}
                 >
-                  Shared by {share.owner_email}
+                  Shared by @{share.owner_username || "unknown"}
                 </div>
               </div>
             ))}

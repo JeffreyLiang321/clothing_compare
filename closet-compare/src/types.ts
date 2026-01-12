@@ -25,12 +25,20 @@ export type Item = {
   created_at: string;
 };
 
+export type Profile = {
+  id: string;
+  username: string;
+  created_at: string;
+};
+
 export type WishlistShare = {
   id: string;
   wishlist_id: string;
   owner_id: string;
-  owner_email: string;
-  shared_with_email: string;
+  recipient_user_id: string;
   created_at: string;
+  // Joined fields from profiles
+  owner_username?: string;
+  recipient_username?: string;
 };
   

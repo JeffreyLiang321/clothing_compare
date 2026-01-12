@@ -8,6 +8,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Share from "./pages/Share";
 import Shared from "./pages/Shared";
 import SharedView from "./pages/SharedView";
+import Settings from "./pages/Settings";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -66,6 +67,12 @@ function Nav() {
             className={({ isActive }) => `pill ${isActive ? "active" : ""}`}
           >
             Shared
+          </NavLink>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => `pill ${isActive ? "active" : ""}`}
+          >
+            Settings
           </NavLink>
           <button
             type="button"
@@ -132,6 +139,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <SharedView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />
