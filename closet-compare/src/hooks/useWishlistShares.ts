@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { WishlistShare } from "../types";
 
-export function useWishlistShares(wishlistId: string | null, ownerId: string | null) {
+export function useWishlistShares(wishlistId: string | null, ownerUserId: string | null) {
   const [shares, setShares] = useState<WishlistShare[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!wishlistId || !ownerId) {
+    if (!wishlistId || !ownerUserId) {
       setShares([]);
       setLoading(false);
       return;
@@ -23,7 +23,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
         .from("wishlist_shares")
         .select("*")
         .eq("wishlist_id", wishlistId)
-        .eq("owner_id", ownerId)
+        .eq("owner_user_id", ownerUserId)
         .order("created_at", { ascending: false });
 
       if (fetchError) {
@@ -34,7 +34,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
         // Fetch usernames for owner and recipients
         const userIds = new Set<string>();
         (sharesData || []).forEach((share: any) => {
-          if (share.owner_id) userIds.add(share.owner_id);
+          if (share.owner_user_id) userIds.add(share.owner_user_id);
           if (share.recipient_user_id) userIds.add(share.recipient_user_id);
         });
 
@@ -50,7 +50,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
         // Transform the data to include usernames
         const transformedShares = (sharesData || []).map((share: any) => ({
           ...share,
-          owner_username: profilesMap.get(share.owner_id),
+          owner_username: profilesMap.get(share.owner_user_id),
           recipient_username: profilesMap.get(share.recipient_user_id),
         }));
         setShares(transformedShares as WishlistShare[]);
@@ -60,11 +60,11 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     };
 
     fetchShares();
-  }, [wishlistId, ownerId]);
+  }, [wishlistId, ownerUserId]);
 
   const createShare = async (data: {
     wishlist_id: string;
-    owner_id: string;
+    owner_user_id: string;
     recipient_user_id: string;
   }) => {
     const { data: shareData, error: createError } = await supabase
@@ -72,7 +72,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       .insert([
         {
           wishlist_id: data.wishlist_id,
-          owner_id: data.owner_id,
+          owner_user_id: data.owner_user_id,
           recipient_user_id: data.recipient_user_id,
         },
       ])
@@ -95,7 +95,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, username")
-        .in("id", [shareData.owner_id, shareData.recipient_user_id]);
+        .in("id", [shareData.owner_user_id, shareData.recipient_user_id]);
 
       const profilesMap = new Map(
         (profilesData || []).map((p: any) => [p.id, p.username])
@@ -103,7 +103,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
 
       const transformedShare = {
         ...shareData,
-        owner_username: profilesMap.get(shareData.owner_id),
+        owner_username: profilesMap.get(shareData.owner_user_id),
         recipient_username: profilesMap.get(shareData.recipient_user_id),
       };
       setShares((prev) => [transformedShare as WishlistShare, ...prev]);
@@ -119,7 +119,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       .delete()
       .eq("id", shareId)
       .eq("wishlist_id", wishlistId)
-      .eq("owner_id", ownerId);
+      .eq("owner_user_id", ownerUserId);
 
     if (deleteError) {
       console.error("Error deleting share:", deleteError);
@@ -143,7 +143,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     // Fetch usernames for owners
     const ownerIds = new Set<string>();
     (sharesData || []).forEach((share: any) => {
-      if (share.owner_id) ownerIds.add(share.owner_id);
+      if (share.owner_user_id) ownerIds.add(share.owner_user_id);
     });
 
     const { data: profilesData } = await supabase
@@ -158,7 +158,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     // Transform the data to include usernames
     const transformedShares = (sharesData || []).map((share: any) => ({
       ...share,
-      owner_username: profilesMap.get(share.owner_id),
+      owner_username: profilesMap.get(share.owner_user_id),
       recipient_username: profilesMap.get(share.recipient_user_id),
     }));
 
@@ -182,7 +182,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("id, username")
-      .in("id", [data.owner_id, data.recipient_user_id]);
+      .in("id", [data.owner_user_id, data.recipient_user_id]);
 
     const profilesMap = new Map(
       (profilesData || []).map((p: any) => [p.id, p.username])
@@ -190,7 +190,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
 
     const transformedShare = {
       ...data,
-      owner_username: profilesMap.get(data.owner_id),
+      owner_username: profilesMap.get(data.owner_user_id),
       recipient_username: profilesMap.get(data.recipient_user_id),
     };
 
@@ -198,7 +198,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
   };
 
   const refetch = async () => {
-    if (!wishlistId || !ownerId) return;
+    if (!wishlistId || !ownerUserId) return;
 
     setLoading(true);
     setError(null);
@@ -207,7 +207,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       .from("wishlist_shares")
       .select("*")
       .eq("wishlist_id", wishlistId)
-      .eq("owner_id", ownerId)
+      .eq("owner_user_id", ownerUserId)
       .order("created_at", { ascending: false });
 
     if (fetchError) {
@@ -217,7 +217,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       // Fetch usernames
       const userIds = new Set<string>();
       (sharesData || []).forEach((share: any) => {
-        if (share.owner_id) userIds.add(share.owner_id);
+        if (share.owner_user_id) userIds.add(share.owner_user_id);
         if (share.recipient_user_id) userIds.add(share.recipient_user_id);
       });
 
@@ -233,7 +233,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       // Transform the data to include usernames
       const transformedShares = (sharesData || []).map((share: any) => ({
         ...share,
-        owner_username: profilesMap.get(share.owner_id),
+        owner_username: profilesMap.get(share.owner_user_id),
         recipient_username: profilesMap.get(share.recipient_user_id),
       }));
       setShares(transformedShares as WishlistShare[]);

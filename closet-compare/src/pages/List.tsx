@@ -78,7 +78,7 @@ export default function List() {
 
       await createShare({
         wishlist_id: activeWishlistId,
-        owner_id: user.id,
+        owner_user_id: user.id,
         recipient_user_id: recipientUserId,
       });
 

@@ -34,7 +34,7 @@ export type Profile = {
 export type WishlistShare = {
   id: string;
   wishlist_id: string;
-  owner_id: string;
+  owner_user_id: string;
   recipient_user_id: string;
   created_at: string;
   // Joined fields from profiles
