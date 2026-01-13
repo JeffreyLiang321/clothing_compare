@@ -34,8 +34,8 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
         // Fetch usernames for owner and recipients
         const userIds = new Set<string>();
         (sharesData || []).forEach((share: any) => {
-          userIds.add(share.owner_id);
-          userIds.add(share.recipient_user_id);
+          if (share.owner_id) userIds.add(share.owner_id);
+          if (share.recipient_user_id) userIds.add(share.recipient_user_id);
         });
 
         const { data: profilesData } = await supabase
@@ -69,13 +69,25 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
   }) => {
     const { data: shareData, error: createError } = await supabase
       .from("wishlist_shares")
-      .insert([data])
+      .insert([
+        {
+          wishlist_id: data.wishlist_id,
+          owner_id: data.owner_id,
+          recipient_user_id: data.recipient_user_id,
+        },
+      ])
       .select()
       .single();
 
     if (createError) {
       console.error("Error creating share:", createError);
-      throw createError;
+      // Provide user-friendly error messages
+      if (createError.code === "23502") {
+        throw new Error("Failed to create share: missing required field");
+      } else if (createError.code === "23505") {
+        throw new Error("Wishlist is already shared with this user");
+      }
+      throw new Error(createError.message || "Failed to share wishlist");
     }
 
     if (shareData) {
@@ -131,7 +143,7 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
     // Fetch usernames for owners
     const ownerIds = new Set<string>();
     (sharesData || []).forEach((share: any) => {
-      ownerIds.add(share.owner_id);
+      if (share.owner_id) ownerIds.add(share.owner_id);
     });
 
     const { data: profilesData } = await supabase
@@ -205,8 +217,8 @@ export function useWishlistShares(wishlistId: string | null, ownerId: string | n
       // Fetch usernames
       const userIds = new Set<string>();
       (sharesData || []).forEach((share: any) => {
-        userIds.add(share.owner_id);
-        userIds.add(share.recipient_user_id);
+        if (share.owner_id) userIds.add(share.owner_id);
+        if (share.recipient_user_id) userIds.add(share.recipient_user_id);
       });
 
       const { data: profilesData } = await supabase

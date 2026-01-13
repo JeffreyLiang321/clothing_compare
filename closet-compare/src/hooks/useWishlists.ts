@@ -41,13 +41,19 @@ export function useWishlists(userId: string | null) {
   const createWishlist = async (name: string) => {
     if (!userId) throw new Error("User ID is required");
 
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      throw new Error("Wishlist name cannot be empty");
+    }
+
     const shareToken = crypto.randomUUID();
     const { data, error: createError } = await supabase
       .from("wishlists")
       .insert([
         {
           user_id: userId,
-          name: name.trim(),
+          name: trimmedName,
+          normalized_name: trimmedName.toLowerCase(),
           is_public: false,
           share_token: shareToken,
         },
@@ -57,7 +63,13 @@ export function useWishlists(userId: string | null) {
 
     if (createError) {
       console.error("Error creating wishlist:", createError);
-      throw createError;
+      // Provide user-friendly error message
+      if (createError.code === "23502") {
+        throw new Error("Failed to create wishlist: missing required field");
+      } else if (createError.code === "23505") {
+        throw new Error(`A cart named "${trimmedName}" already exists`);
+      }
+      throw new Error(createError.message || "Failed to create wishlist");
     }
 
     if (data) {

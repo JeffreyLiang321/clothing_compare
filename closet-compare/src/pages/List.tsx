@@ -86,7 +86,9 @@ export default function List() {
       setTimeout(() => setAccountShareMessage(null), 3000);
     } catch (error: any) {
       console.error("Error sharing wishlist:", error);
-      setAccountShareMessage(error.message || "Failed to share wishlist");
+      // Show user-friendly error message
+      const errorMessage = error.message || "Failed to share wishlist";
+      setAccountShareMessage(errorMessage);
     }
 
     setAccountShareLoading(false);

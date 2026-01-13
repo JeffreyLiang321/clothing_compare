@@ -66,9 +66,10 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
           if (onWishlistChangeRef.current) {
             onWishlistChangeRef.current(activeId);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error creating default wishlist:", error);
-          // Don't reset hasInitializedRef - we've already tried once
+          // Show error in UI if possible, but don't reset hasInitializedRef - we've already tried once
+          // Error will be visible in the error state UI
         }
         return;
       }
@@ -123,9 +124,11 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
       if (onWishlistChangeRef.current) {
         onWishlistChangeRef.current(newId);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating wishlist:", error);
-      alert("Failed to create cart");
+      // Show user-friendly error message
+      const errorMessage = error.message || "Failed to create cart. Please try again.";
+      alert(errorMessage);
     }
 
     setCreating(false);

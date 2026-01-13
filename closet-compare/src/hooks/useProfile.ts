@@ -148,6 +148,7 @@ export function useProfile(userId: string | null) {
     return data.id;
   };
 
+
   const refetch = async () => {
     if (!userId) return;
 
