@@ -53,7 +53,7 @@ export function useWishlists(userId: string | null) {
         {
           user_id: userId,
           name: trimmedName,
-          normalized_name: trimmedName.toLowerCase(),
+          name_normalized: trimmedName.toLowerCase(),
           is_public: false,
           share_token: shareToken,
         },
