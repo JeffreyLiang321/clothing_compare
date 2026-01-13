@@ -4,6 +4,7 @@ import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
 import { useProfile } from "../hooks/useProfile";
+import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
 import type { Item } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
@@ -13,7 +14,7 @@ type FilterStatus = "all" | "considering" | "bought" | "dropped";
 
 export default function List() {
   const { user } = useAuth();
-  const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
+  const { activeWishlistId, setActiveWishlistId } = useActiveWishlist();
   const [sort, setSort] = useState<"newest" | "price-asc" | "price-desc">(
     "newest"
   );

@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
+import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
+import { useWishlists } from "../hooks/useWishlists";
 import ItemForm from "../components/ItemForm";
-import WishlistSelector, { getActiveWishlistId } from "../components/WishlistSelector";
+import WishlistSelector from "../components/WishlistSelector";
 
 type NewItem = {
   url: string;
@@ -20,7 +22,8 @@ type NewItem = {
 export default function AddItem() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
+  const { activeWishlistId, setActiveWishlistId } = useActiveWishlist();
+  const { wishlists } = useWishlists(user?.id || null);
   const [form, setForm] = useState<NewItem>({
     url: "",
     store: "",
@@ -36,13 +39,6 @@ export default function AddItem() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasPrefilledRef = useRef(false);
-
-  useEffect(() => {
-    const storedId = getActiveWishlistId();
-    if (storedId) {
-      setActiveWishlistId(storedId);
-    }
-  }, []);
 
   // Prefill form from URL query params (only once on mount)
   useEffect(() => {
@@ -102,6 +98,20 @@ export default function AddItem() {
 
     if (!activeWishlistId) {
       setError("Please select a cart first");
+      setLoading(false);
+      return;
+    }
+
+    // Guard: Validate that activeWishlistId belongs to current user
+    const isValidWishlist = wishlists.some((w) => w.id === activeWishlistId);
+    if (!isValidWishlist) {
+      setError("Selected cart is invalid. Please select a valid cart.");
+      // Reset to first wishlist if available
+      if (wishlists.length > 0) {
+        setActiveWishlistId(wishlists[0].id);
+      } else {
+        setActiveWishlistId(null);
+      }
       setLoading(false);
       return;
     }

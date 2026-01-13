@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useWishlists } from "../hooks/useWishlists";
-
-const ACTIVE_WISHLIST_KEY = "activeWishlistId";
+import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
 
 type Props = {
   onWishlistChange?: (wishlistId: string) => void;
@@ -10,8 +9,8 @@ type Props = {
 
 export default function WishlistSelector({ onWishlistChange }: Props) {
   const { user } = useAuth();
+  const { activeWishlistId, setActiveWishlistId } = useActiveWishlist();
   const { wishlists, loading: wishlistsLoading, error: wishlistsError, createWishlist, renameWishlist, refetch } = useWishlists(user?.id || null);
-  const [activeWishlistId, setActiveWishlistId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCartName, setNewCartName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -31,8 +30,14 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
   // Reset initialization state when user changes
   useEffect(() => {
     hasInitializedRef.current = false;
-    setActiveWishlistId(null);
   }, [user?.id]);
+
+  // Sync activeWishlistId changes to callback
+  useEffect(() => {
+    if (activeWishlistId && onWishlistChangeRef.current) {
+      onWishlistChangeRef.current(activeWishlistId);
+    }
+  }, [activeWishlistId]);
 
   useEffect(() => {
     const initializeWishlists = async () => {
@@ -62,10 +67,6 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
 
           const activeId = newWishlist.id;
           setActiveWishlistId(activeId);
-          localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
-          if (onWishlistChangeRef.current) {
-            onWishlistChangeRef.current(activeId);
-          }
         } catch (error: any) {
           console.error("Error creating default wishlist:", error);
           // Show error in UI if possible, but don't reset hasInitializedRef - we've already tried once
@@ -74,23 +75,13 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
         return;
       }
 
-      // If wishlists exist, set active from localStorage or first wishlist
+      // If wishlists exist and no active wishlist is set, use first wishlist
+      // The context will handle validation and setting
       hasInitializedRef.current = true;
-      const storedId = localStorage.getItem(ACTIVE_WISHLIST_KEY);
-      const activeId =
-        storedId && wishlists.some((w) => w.id === storedId)
-          ? storedId
-          : wishlists[0].id;
-
-      setActiveWishlistId(activeId);
-      localStorage.setItem(ACTIVE_WISHLIST_KEY, activeId);
-      if (onWishlistChangeRef.current) {
-        onWishlistChangeRef.current(activeId);
-      }
     };
 
     initializeWishlists();
-  }, [user?.id, wishlistsLoading, wishlists.length, wishlistsError, refetch, createWishlist]);
+  }, [user?.id, wishlistsLoading, wishlists.length, wishlistsError, refetch, createWishlist, setActiveWishlistId]);
 
   const handleWishlistChange = (wishlistId: string) => {
     if (wishlistId === "new") {
@@ -99,10 +90,6 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
     }
 
     setActiveWishlistId(wishlistId);
-    localStorage.setItem(ACTIVE_WISHLIST_KEY, wishlistId);
-    if (onWishlistChangeRef.current) {
-      onWishlistChangeRef.current(wishlistId);
-    }
   };
 
   const handleCreateCart = async (e: React.FormEvent) => {
@@ -120,10 +107,6 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
 
       const newId = newWishlist.id;
       setActiveWishlistId(newId);
-      localStorage.setItem(ACTIVE_WISHLIST_KEY, newId);
-      if (onWishlistChangeRef.current) {
-        onWishlistChangeRef.current(newId);
-      }
     } catch (error: any) {
       console.error("Error creating wishlist:", error);
       // Show user-friendly error message
@@ -407,11 +390,4 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
   );
 }
 
-export function getActiveWishlistId(): string | null {
-  return localStorage.getItem(ACTIVE_WISHLIST_KEY);
-}
-
-export function setActiveWishlistId(id: string): void {
-  localStorage.setItem(ACTIVE_WISHLIST_KEY, id);
-}
 

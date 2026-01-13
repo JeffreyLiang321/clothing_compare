@@ -4,20 +4,21 @@ import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
+import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
 import type { Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
-import { getActiveWishlistId } from "../components/WishlistSelector";
 
 type FilterStatus = "all" | "considering" | "bought" | "dropped";
 
 export default function SharedView() {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
+  const { activeWishlistId } = useActiveWishlist();
   const { items, loading: itemsLoading } = useItems(id || null);
   const { getShareByWishlistAndUserId } = useWishlistShares(null, null);
   const { getWishlistById } = useWishlists(null);
-  const { createItem } = useItems(getActiveWishlistId());
+  const { createItem } = useItems(activeWishlistId);
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [wishlistLoading, setWishlistLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +132,6 @@ export default function SharedView() {
   const handleSaveCopy = async () => {
     if (!user || !items.length) return;
 
-    const activeWishlistId = getActiveWishlistId();
     if (!activeWishlistId) {
       setCopyMessage("Please select a cart first");
       setTimeout(() => setCopyMessage(null), 3000);

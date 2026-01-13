@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
+import { ActiveWishlistProvider } from "./contexts/ActiveWishlistContext";
 import List from "./pages/List";
 import AddItem from "./pages/AddItem";
 import Auth from "./pages/Auth";
@@ -27,7 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  return <ActiveWishlistProvider>{children}</ActiveWishlistProvider>;
 }
 
 function Nav() {
