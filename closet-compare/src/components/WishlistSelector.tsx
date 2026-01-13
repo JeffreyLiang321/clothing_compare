@@ -100,13 +100,16 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
 
     try {
       const newWishlist = await createWishlist(newCartName.trim());
-      await refetch();
-
+      
       setNewCartName("");
       setShowCreateModal(false);
 
       const newId = newWishlist.id;
+      // Set active wishlist immediately (it's already in local state from createWishlist)
       setActiveWishlistId(newId);
+      
+      // Refetch to ensure all components have latest data
+      await refetch();
     } catch (error: any) {
       console.error("Error creating wishlist:", error);
       // Show user-friendly error message

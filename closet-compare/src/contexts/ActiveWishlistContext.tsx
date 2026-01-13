@@ -49,14 +49,25 @@ export function ActiveWishlistProvider({ children }: { children: ReactNode }) {
   }, [user?.id, wishlistsLoading, wishlists.length, wishlists, activeWishlistId]);
 
   const setActiveWishlistId = (id: string | null) => {
-    // Validate that the wishlist belongs to current user before setting
-    if (id && user && wishlists.length > 0) {
-      const isValid = wishlists.some((w) => w.id === id);
-      if (!isValid) {
-        console.warn("Attempted to set active wishlist that doesn't belong to current user");
-        return;
-      }
+    // Allow setting to null
+    if (!id) {
+      setActiveWishlistIdState(null);
+      return;
     }
+
+    // If wishlists haven't loaded yet, allow setting (will be validated later)
+    if (wishlistsLoading || wishlists.length === 0) {
+      setActiveWishlistIdState(id);
+      return;
+    }
+
+    // Validate that the wishlist belongs to current user before setting
+    const isValid = wishlists.some((w) => w.id === id);
+    if (!isValid) {
+      console.warn("Attempted to set active wishlist that doesn't belong to current user");
+      return;
+    }
+    
     setActiveWishlistIdState(id);
   };
 
