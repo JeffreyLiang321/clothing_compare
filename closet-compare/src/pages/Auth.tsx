@@ -2,12 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, getAuthRedirectUrl } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
-import { useProfile } from "../hooks/useProfile";
 
 export default function Auth() {
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { findUserIdByUsername } = useProfile(null);
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -58,49 +56,33 @@ export default function Auth() {
     setError(null);
     setMessage(null);
 
-    const input = emailOrUsername.trim().toLowerCase();
+    const input = emailOrUsername.trim();
     if (!input) {
       setError("Please enter an email or username");
       setLoading(false);
       return;
     }
 
-    let email: string;
+    // Use RPC function to resolve identifier (email or username) to email
+    const { data: resolvedEmail, error: rpcError } = await supabase.rpc("resolve_login_email", {
+      identifier: input,
+    });
 
-    // Check if input is an email (contains @) or username
-    if (input.includes("@")) {
-      // It's an email, use it directly
-      email = input;
-    } else {
-      // It's a username, look up the email
-      try {
-        const userId = await findUserIdByUsername(input);
-        // Get user email from auth.users via a database function or RPC
-        // For now, we'll need to create a helper function or use a different approach
-        // Since we can't directly query auth.users from client, we'll use a workaround
-        // Try to get email via a database function
-        const { data, error: rpcError } = await supabase.rpc("get_user_email_by_id", {
-          user_id: userId,
-        });
+    if (rpcError) {
+      console.error("Error resolving login email:", rpcError);
+      setError("Failed to process login request. Please try again.");
+      setLoading(false);
+      return;
+    }
 
-        if (rpcError || !data) {
-          // Fallback: try to get email from user metadata if available
-          // Or we can create a view/function in Supabase
-          setError("Could not find email for username. Please use your email address to sign in.");
-          setLoading(false);
-          return;
-        }
-
-        email = data;
-      } catch (err: any) {
-        setError(err.message || "Username not found. Please use your email address to sign in.");
-        setLoading(false);
-        return;
-      }
+    if (!resolvedEmail) {
+      setError("No user found with that email or username.");
+      setLoading(false);
+      return;
     }
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: resolvedEmail,
       options: {
         emailRedirectTo: getAuthRedirectUrl(),
       },

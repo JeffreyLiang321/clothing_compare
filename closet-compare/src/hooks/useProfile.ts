@@ -83,10 +83,9 @@ export function useProfile(userId: string | null) {
       .select("id")
       .ilike("username", trimmedUsername)
       .neq("id", userId)
-      .single();
+      .maybeSingle();
 
-    if (checkError && checkError.code !== "PGRST116") {
-      // PGRST116 means no rows found, which is what we want
+    if (checkError) {
       console.error("Error checking username:", checkError);
       throw new Error("Failed to check username availability");
     }
@@ -131,12 +130,9 @@ export function useProfile(userId: string | null) {
       .from("profiles")
       .select("id")
       .ilike("username", trimmedUsername)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
-      if (fetchError.code === "PGRST116") {
-        throw new Error("No user with that username");
-      }
       console.error("Error finding user by username:", fetchError);
       throw fetchError;
     }
