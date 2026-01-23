@@ -427,31 +427,42 @@ function ItemRow({
                 <span>{itemScore?.dislikes || 0}</span>
               </button>
             </div>
-            {itemScore !== undefined && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: itemScore.score !== 0 ? 600 : 400,
-                    color: itemScore.score > 0 ? "#059669" : itemScore.score < 0 ? "#dc2626" : "var(--muted)",
-                  }}
-                >
-                  Score: {itemScore.score > 0 ? "+" : ""}{itemScore.score}
-                </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {itemScore !== undefined ? (
+                <>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: itemScore.score !== 0 ? 600 : 400,
+                      color: itemScore.score > 0 ? "#059669" : itemScore.score < 0 ? "#dc2626" : "var(--muted)",
+                    }}
+                  >
+                    Score: {itemScore.score > 0 ? "+" : ""}{itemScore.score}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--muted)",
+                    }}
+                  >
+                    {itemScore.total_votes || 0} vote{itemScore.total_votes !== 1 ? "s" : ""}
+                  </div>
+                </>
+              ) : (
                 <div
                   style={{
                     fontSize: 11,
                     color: "var(--muted)",
                   }}
                 >
-                  {itemScore.total_votes || 0} vote{itemScore.total_votes !== 1 ? "s" : ""}
+                  Score: 0
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </td>
       )}
-      {!readOnly && !showReactions && (
+      {!readOnly && (
         <td style={{ minWidth: 100, whiteSpace: "nowrap" }}>
           <div style={{ display: "flex", gap: 6 }}>
             {onUpdate && (
@@ -505,7 +516,7 @@ export default function ItemTable({
             <th style={{ minWidth: 180 }}>Tags</th>
             <th style={{ minWidth: 220 }}>Notes</th>
             {showReactions && <th style={{ minWidth: 140 }}>Feedback</th>}
-            {!readOnly && !showReactions && <th style={{ minWidth: 110 }}>Actions</th>}
+            {!readOnly && <th style={{ minWidth: 110 }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
