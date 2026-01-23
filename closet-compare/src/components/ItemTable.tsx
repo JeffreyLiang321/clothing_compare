@@ -1,11 +1,16 @@
 import { useState } from "react";
-import type { Item } from "../types";
+import type { Item, ItemScore } from "../types";
 
 type Props = {
   items: Item[];
   onDelete?: (id: string) => void;
   onUpdate?: (item: Item) => void;
   readOnly?: boolean;
+  // Reaction props - only used in shared carts
+  userReactions?: Record<string, 1 | -1>;
+  itemScores?: Record<string, ItemScore>;
+  onToggleReaction?: (itemId: string, reaction: 1 | -1) => void;
+  showReactions?: boolean;
 };
 
 const getStatusLabel = (status: string) => {
@@ -50,11 +55,19 @@ function ItemRow({
   onDelete,
   onUpdate,
   readOnly,
+  userReaction,
+  itemScore,
+  onToggleReaction,
+  showReactions,
 }: {
   item: Item;
   onDelete?: (id: string) => void;
   onUpdate?: (item: Item) => void;
   readOnly?: boolean;
+  userReaction?: 1 | -1;
+  itemScore?: ItemScore;
+  onToggleReaction?: (itemId: string, reaction: 1 | -1) => void;
+  showReactions?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<EditableItem>(() => ({
@@ -342,7 +355,87 @@ function ItemRow({
           )}
         </div>
       </td>
-      {!readOnly && (
+      {showReactions && onToggleReaction && (
+        <td style={{ minWidth: 140, whiteSpace: "nowrap" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => onToggleReaction(item.id, 1)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "6px 10px",
+                  fontSize: 14,
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  background: userReaction === 1 ? "var(--primary)" : "white",
+                  color: userReaction === 1 ? "white" : "var(--text)",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (userReaction !== 1) {
+                    e.currentTarget.style.background = "#f9fafb";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (userReaction !== 1) {
+                    e.currentTarget.style.background = "white";
+                  }
+                }}
+              >
+                <span>👍</span>
+                <span>{itemScore?.likes || 0}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleReaction(item.id, -1)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "6px 10px",
+                  fontSize: 14,
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  background: userReaction === -1 ? "#dc2626" : "white",
+                  color: userReaction === -1 ? "white" : "var(--text)",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (userReaction !== -1) {
+                    e.currentTarget.style.background = "var(--hover-bg)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (userReaction !== -1) {
+                    e.currentTarget.style.background = "white";
+                  }
+                }}
+              >
+                <span>👎</span>
+                <span>{itemScore?.dislikes || 0}</span>
+              </button>
+            </div>
+            {itemScore !== undefined && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "var(--muted)",
+                  fontWeight: itemScore.score !== 0 ? 600 : 400,
+                  color: itemScore.score > 0 ? "#059669" : itemScore.score < 0 ? "#dc2626" : "var(--muted)",
+                }}
+              >
+                Score: {itemScore.score > 0 ? "+" : ""}{itemScore.score}
+              </div>
+            )}
+          </div>
+        </td>
+      )}
+      {!readOnly && !showReactions && (
         <td style={{ minWidth: 100, whiteSpace: "nowrap" }}>
           <div style={{ display: "flex", gap: 6 }}>
             {onUpdate && (
@@ -372,7 +465,16 @@ function ItemRow({
   );
 }
 
-export default function ItemTable({ items, onDelete, onUpdate, readOnly }: Props) {
+export default function ItemTable({
+  items,
+  onDelete,
+  onUpdate,
+  readOnly,
+  userReactions = {},
+  itemScores = {},
+  onToggleReaction,
+  showReactions = false,
+}: Props) {
   return (
     <div className="table-wrapper">
       <table className="table">
@@ -385,7 +487,8 @@ export default function ItemTable({ items, onDelete, onUpdate, readOnly }: Props
             <th style={{ minWidth: 140 }}>Status</th>
             <th style={{ minWidth: 180 }}>Tags</th>
             <th style={{ minWidth: 220 }}>Notes</th>
-            {!readOnly && <th style={{ minWidth: 110 }}>Actions</th>}
+            {showReactions && <th style={{ minWidth: 140 }}>Feedback</th>}
+            {!readOnly && !showReactions && <th style={{ minWidth: 110 }}>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -396,6 +499,10 @@ export default function ItemTable({ items, onDelete, onUpdate, readOnly }: Props
               onDelete={onDelete}
               onUpdate={onUpdate}
               readOnly={readOnly}
+              userReaction={userReactions[item.id]}
+              itemScore={itemScores[item.id]}
+              onToggleReaction={onToggleReaction}
+              showReactions={showReactions}
             />
           ))}
         </tbody>

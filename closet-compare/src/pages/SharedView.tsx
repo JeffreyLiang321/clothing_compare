@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
 import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
+import { useItemReactions } from "../hooks/useItemReactions";
 import type { Wishlist } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
@@ -30,6 +31,13 @@ export default function SharedView() {
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchedIdRef = useRef<string | null>(null);
+
+  // Get item IDs for reactions hook
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+  const { reactions, scores, toggleReaction } = useItemReactions(
+    itemIds,
+    user?.id || null
+  );
 
   useEffect(() => {
     const fetchWishlist = async () => {
@@ -303,7 +311,14 @@ export default function SharedView() {
             <p>No items in this wishlist</p>
           </div>
         ) : (
-          <ItemTable items={sortedItems} readOnly />
+          <ItemTable
+            items={sortedItems}
+            readOnly
+            showReactions={true}
+            userReactions={reactions}
+            itemScores={scores}
+            onToggleReaction={toggleReaction}
+          />
         )}
       </div>
     </div>

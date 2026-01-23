@@ -42,4 +42,17 @@ export type WishlistShare = {
   owner_username?: string;
   recipient_username?: string;
 };
+
+export type ItemReaction = {
+  item_id: string;
+  user_id: string;
+  reaction: 1 | -1;
+};
+
+export type ItemScore = {
+  item_id: string;
+  score: number;
+  likes: number;
+  dislikes: number;
+};
   
