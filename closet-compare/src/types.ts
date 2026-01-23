@@ -54,5 +54,6 @@ export type ItemScore = {
   score: number;
   likes: number;
   dislikes: number;
+  total_votes: number;
 };
   

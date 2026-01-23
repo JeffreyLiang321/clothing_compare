@@ -1,20 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
+import type { ItemScore } from "../types";
 
-export type ItemReaction = {
-  item_id: string;
-  user_id: string;
-  reaction: 1 | -1;
-};
-
-export type ItemScore = {
-  item_id: string;
-  score: number;
-  likes: number;
-  dislikes: number;
-};
-
-export function useItemReactions(itemIds: string[], userId: string | null) {
+export function useItemReactions(wishlistId: string | null, userId: string | null, itemIds: string[]) {
   const [reactions, setReactions] = useState<Record<string, 1 | -1>>({});
   const [scores, setScores] = useState<Record<string, ItemScore>>({});
   const [loading, setLoading] = useState(false);
@@ -44,15 +32,15 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
     setReactions(reactionsMap);
   }, [userId, itemIds.join(",")]);
 
-  // Fetch batched item scores
+  // Fetch aggregate totals for all items in the wishlist via RPC
   const fetchItemScores = useCallback(async () => {
-    if (itemIds.length === 0) {
+    if (!wishlistId) {
       setScores({});
       return;
     }
 
-    const { data, error } = await supabase.rpc("get_item_scores", {
-      item_ids: itemIds,
+    const { data, error } = await supabase.rpc("get_wishlist_item_scores", {
+      p_wishlist_id: wishlistId,
     });
 
     if (error) {
@@ -65,11 +53,11 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
       scoresMap[row.item_id] = row;
     });
     setScores(scoresMap);
-  }, [itemIds.join(",")]);
+  }, [wishlistId]);
 
   // Initial fetch
   useEffect(() => {
-    if (itemIds.length === 0) {
+    if (!wishlistId || itemIds.length === 0) {
       setReactions({});
       setScores({});
       return;
@@ -79,7 +67,7 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
     Promise.all([fetchUserReactions(), fetchItemScores()]).finally(() => {
       setLoading(false);
     });
-  }, [fetchUserReactions, fetchItemScores]);
+  }, [wishlistId, fetchUserReactions, fetchItemScores]);
 
   // Upsert or delete reaction
   const toggleReaction = useCallback(
@@ -113,6 +101,7 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
               score: current.score - reaction,
               likes: reaction === 1 ? current.likes - 1 : current.likes,
               dislikes: reaction === -1 ? current.dislikes - 1 : current.dislikes,
+              total_votes: current.total_votes - 1,
             },
           };
         });
@@ -131,6 +120,7 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
                 score: reaction,
                 likes: reaction === 1 ? 1 : 0,
                 dislikes: reaction === -1 ? 1 : 0,
+                total_votes: 1,
               },
             };
           }
@@ -139,6 +129,7 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
           let scoreDelta = reaction;
           let likesDelta = reaction === 1 ? 1 : 0;
           let dislikesDelta = reaction === -1 ? 1 : 0;
+          let totalVotesDelta = previousReaction === undefined ? 1 : 0;
 
           if (previousReaction === 1) {
             scoreDelta -= 1;
@@ -155,6 +146,7 @@ export function useItemReactions(itemIds: string[], userId: string | null) {
               score: current.score + scoreDelta,
               likes: current.likes + likesDelta,
               dislikes: current.dislikes + dislikesDelta,
+              total_votes: current.total_votes + totalVotesDelta,
             },
           };
         });

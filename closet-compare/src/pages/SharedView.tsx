@@ -35,8 +35,9 @@ export default function SharedView() {
   // Get item IDs for reactions hook
   const itemIds = useMemo(() => items.map((item) => item.id), [items]);
   const { reactions, scores, toggleReaction } = useItemReactions(
-    itemIds,
-    user?.id || null
+    id || null,
+    user?.id || null,
+    itemIds
   );
 
   useEffect(() => {
