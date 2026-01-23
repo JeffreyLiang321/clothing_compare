@@ -354,6 +354,7 @@ export default function List() {
             userReactions={reactions}
             itemScores={scores}
             onToggleReaction={toggleReaction}
+            canVote={false}
           />
         )}
       </div>

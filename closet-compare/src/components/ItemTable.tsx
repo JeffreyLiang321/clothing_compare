@@ -11,6 +11,7 @@ type Props = {
   itemScores?: Record<string, ItemScore>;
   onToggleReaction?: (itemId: string, reaction: 1 | -1) => void;
   showReactions?: boolean;
+  canVote?: boolean; // Whether the user can vote (false for owners viewing their own items)
 };
 
 const getStatusLabel = (status: string) => {
@@ -59,6 +60,7 @@ function ItemRow({
   itemScore,
   onToggleReaction,
   showReactions,
+  canVote = true,
 }: {
   item: Item;
   onDelete?: (id: string) => void;
@@ -68,6 +70,7 @@ function ItemRow({
   itemScore?: ItemScore;
   onToggleReaction?: (itemId: string, reaction: 1 | -1) => void;
   showReactions?: boolean;
+  canVote?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<EditableItem>(() => ({
@@ -355,13 +358,14 @@ function ItemRow({
           )}
         </div>
       </td>
-      {showReactions && onToggleReaction && (
+      {showReactions && (
         <td style={{ minWidth: 140, whiteSpace: "nowrap" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <button
                 type="button"
-                onClick={() => onToggleReaction(item.id, 1)}
+                onClick={canVote && onToggleReaction ? () => onToggleReaction(item.id, 1) : undefined}
+                disabled={!canVote}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -372,16 +376,17 @@ function ItemRow({
                   borderRadius: 6,
                   background: userReaction === 1 ? "var(--primary)" : "white",
                   color: userReaction === 1 ? "white" : "var(--text)",
-                  cursor: "pointer",
+                  cursor: canVote ? "pointer" : "not-allowed",
+                  opacity: canVote ? 1 : 0.6,
                   transition: "all 0.2s",
                 }}
                 onMouseEnter={(e) => {
-                  if (userReaction !== 1) {
+                  if (canVote && userReaction !== 1) {
                     e.currentTarget.style.background = "#f9fafb";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (userReaction !== 1) {
+                  if (canVote && userReaction !== 1) {
                     e.currentTarget.style.background = "white";
                   }
                 }}
@@ -391,7 +396,8 @@ function ItemRow({
               </button>
               <button
                 type="button"
-                onClick={() => onToggleReaction(item.id, -1)}
+                onClick={canVote && onToggleReaction ? () => onToggleReaction(item.id, -1) : undefined}
+                disabled={!canVote}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -402,16 +408,17 @@ function ItemRow({
                   borderRadius: 6,
                   background: userReaction === -1 ? "#dc2626" : "white",
                   color: userReaction === -1 ? "white" : "var(--text)",
-                  cursor: "pointer",
+                  cursor: canVote ? "pointer" : "not-allowed",
+                  opacity: canVote ? 1 : 0.6,
                   transition: "all 0.2s",
                 }}
                 onMouseEnter={(e) => {
-                  if (userReaction !== -1) {
-                    e.currentTarget.style.background = "var(--hover-bg)";
+                  if (canVote && userReaction !== -1) {
+                    e.currentTarget.style.background = "#f9fafb";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (userReaction !== -1) {
+                  if (canVote && userReaction !== -1) {
                     e.currentTarget.style.background = "white";
                   }
                 }}
@@ -483,6 +490,7 @@ export default function ItemTable({
   itemScores = {},
   onToggleReaction,
   showReactions = false,
+  canVote = true,
 }: Props) {
   return (
     <div className="table-wrapper">
@@ -512,6 +520,7 @@ export default function ItemTable({
               itemScore={itemScores[item.id]}
               onToggleReaction={onToggleReaction}
               showReactions={showReactions}
+              canVote={canVote}
             />
           ))}
         </tbody>
