@@ -100,7 +100,7 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
 
     try {
       const newWishlist = await createWishlist(newCartName.trim());
-      
+
       setNewCartName("");
       setShowCreateModal(false);
 
@@ -204,19 +204,19 @@ export default function WishlistSelector({ onWishlistChange }: Props) {
   return (
     <>
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-        <select
-          className="select"
-          value={activeWishlistId || ""}
-          onChange={(e) => handleWishlistChange(e.target.value)}
-          style={{ minWidth: 200 }}
-        >
-          {wishlists.map((wishlist) => (
-            <option key={wishlist.id} value={wishlist.id}>
-              {wishlist.name}
-            </option>
-          ))}
-          <option value="new">+ New cart</option>
-        </select>
+      <select
+        className="select"
+        value={activeWishlistId || ""}
+        onChange={(e) => handleWishlistChange(e.target.value)}
+        style={{ minWidth: 200 }}
+      >
+        {wishlists.map((wishlist) => (
+          <option key={wishlist.id} value={wishlist.id}>
+            {wishlist.name}
+          </option>
+        ))}
+        <option value="new">+ New cart</option>
+      </select>
 
         {activeWishlistId && wishlists.some((w) => w.id === activeWishlistId) && (
           <button
