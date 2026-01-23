@@ -2,19 +2,41 @@ import { Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom"
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import { ActiveWishlistProvider } from "./contexts/ActiveWishlistContext";
+import { isSetupComplete } from "./lib/authHelpers";
 import List from "./pages/List";
 import AddItem from "./pages/AddItem";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
+import FinishSetup from "./pages/FinishSetup";
 import Share from "./pages/Share";
 import Shared from "./pages/Shared";
 import SharedView from "./pages/SharedView";
 import Settings from "./pages/Settings";
+import { useEffect, useState } from "react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, user } = useAuth();
+  const [checkingSetup, setCheckingSetup] = useState(true);
+  const [setupComplete, setSetupComplete] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    const checkSetup = async () => {
+      if (loading) return;
+      
+      if (!session || !user) {
+        setCheckingSetup(false);
+        return;
+      }
+
+      const complete = await isSetupComplete(user.id);
+      setSetupComplete(complete);
+      setCheckingSetup(false);
+    };
+
+    checkSetup();
+  }, [session, user, loading]);
+
+  if (loading || checkingSetup) {
     return (
       <div className="panel">
         <div className="panel-body">
@@ -28,7 +50,56 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" replace />;
   }
 
+  // Redirect to finish-setup if not complete
+  if (!setupComplete) {
+    return <Navigate to="/finish-setup" replace />;
+  }
+
   return <ActiveWishlistProvider>{children}</ActiveWishlistProvider>;
+}
+
+function FinishSetupRoute({ children }: { children: React.ReactNode }) {
+  const { session, loading, user } = useAuth();
+  const [checkingSetup, setCheckingSetup] = useState(true);
+  const [setupComplete, setSetupComplete] = useState(false);
+
+  useEffect(() => {
+    const checkSetup = async () => {
+      if (loading) return;
+      
+      if (!session || !user) {
+        setCheckingSetup(false);
+        return;
+      }
+
+      const complete = await isSetupComplete(user.id);
+      setSetupComplete(complete);
+      setCheckingSetup(false);
+    };
+
+    checkSetup();
+  }, [session, user, loading]);
+
+  if (loading || checkingSetup) {
+    return (
+      <div className="panel">
+        <div className="panel-body">
+          <div className="empty">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect to home if setup is already complete
+  if (setupComplete) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
 }
 
 function Nav() {
@@ -110,6 +181,14 @@ export default function App() {
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route
+            path="/finish-setup"
+            element={
+              <FinishSetupRoute>
+                <FinishSetup />
+              </FinishSetupRoute>
+            }
+          />
           <Route path="/share/:token" element={<Share />} />
           <Route
             path="/"

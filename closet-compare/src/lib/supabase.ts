@@ -18,7 +18,11 @@ export const supabase = createClient(supabaseUrl || "", supabaseKey || "", {
 });
 
 /**
- * Get the authentication callback URL for OAuth and magic link flows.
- * Ensures both OAuth (redirectTo) and magic link (emailRedirectTo) use the same callback URL.
+ * Get the authentication callback URL for OAuth flows.
  */
 export const getAuthRedirectUrl = () => `${window.location.origin}/auth/callback`;
+
+/**
+ * Get the finish setup redirect URL for email confirmation flows.
+ */
+export const getFinishSetupRedirectUrl = () => `${window.location.origin}/finish-setup`;

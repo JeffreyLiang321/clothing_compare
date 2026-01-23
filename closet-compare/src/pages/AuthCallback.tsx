@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { isSetupComplete } from "../lib/authHelpers";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -21,7 +21,7 @@ export default function AuthCallback() {
       console.log("[AuthCallback] Exchanging code for session...");
       
       // Exchange code for session - wait for this to complete before any navigation
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (exchangeError) {
         console.error("[AuthCallback] exchangeCodeForSession error:", exchangeError);
@@ -30,9 +30,15 @@ export default function AuthCallback() {
         return;
       }
 
-      console.log("[AuthCallback] Session exchange successful, redirecting to /");
-      // Only navigate after successful exchange
-      navigate("/", { replace: true });
+      console.log("[AuthCallback] Session exchange successful, checking setup status...");
+      
+      // Check if setup is complete
+      if (data.user) {
+        const complete = await isSetupComplete(data.user.id);
+        navigate(complete ? "/" : "/finish-setup", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     })();
   }, [navigate, searchParams]);
 
