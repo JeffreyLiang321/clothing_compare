@@ -29,6 +29,7 @@ export type Profile = {
   id: string;
   username: string;
   created_at: string;
+  onboarding_complete?: boolean;
 };
 
 export type WishlistShare = {

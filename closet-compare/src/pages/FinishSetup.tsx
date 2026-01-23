@@ -116,7 +116,7 @@ export default function FinishSetup() {
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert(
-          { id: user.id, username: trimmedUsername },
+          { id: user.id, username: trimmedUsername, onboarding_complete: false },
           { onConflict: "id" }
         );
 
@@ -185,7 +185,18 @@ export default function FinishSetup() {
         throw passwordError;
       }
 
-      // Step D: Setup complete, redirect to app home
+      // Step D: Mark onboarding as complete
+      const { error: onboardingError } = await supabase
+        .from("profiles")
+        .update({ onboarding_complete: true })
+        .eq("id", user.id);
+
+      if (onboardingError) {
+        console.error("Error marking onboarding complete:", onboardingError);
+        // Don't fail the whole flow if this fails, but log it
+      }
+
+      // Step E: Setup complete, redirect to app home
       navigate("/", { replace: true });
     } catch (err: any) {
       console.error("Error completing setup:", err);

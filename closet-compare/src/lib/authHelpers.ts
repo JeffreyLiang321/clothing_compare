@@ -1,14 +1,14 @@
 import { supabase } from "./supabase";
 
 /**
- * Check if a user has completed their setup (has a username set and not auto-generated)
+ * Check if a user has completed their setup
  * @param userId The user ID to check
  * @returns true if setup is complete, false otherwise
  */
 export async function isSetupComplete(userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("username")
+    .select("username, onboarding_complete")
     .eq("id", userId)
     .maybeSingle();
 
@@ -18,12 +18,23 @@ export async function isSetupComplete(userId: string): Promise<boolean> {
     return false;
   }
 
-  if (!data || !data.username) {
+  if (!data) {
     return false;
   }
 
-  // Setup is incomplete if username is auto-generated (starts with 'user_')
-  if (data.username.startsWith("user_")) {
+  // Check onboarding_complete field first (if it exists and is explicitly false)
+  if (data.onboarding_complete === false) {
+    return false;
+  }
+
+  // If onboarding_complete is true, setup is complete
+  if (data.onboarding_complete === true) {
+    return true;
+  }
+
+  // Fallback for older profiles without onboarding_complete field:
+  // check if username is set and not auto-generated
+  if (!data.username || data.username.startsWith("user_")) {
     return false;
   }
 
