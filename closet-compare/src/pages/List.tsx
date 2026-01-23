@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useWishlists } from "../hooks/useWishlists";
 import { useWishlistShares } from "../hooks/useWishlistShares";
 import { useProfile } from "../hooks/useProfile";
 import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
+import { useItemReactions } from "../hooks/useItemReactions";
 import type { Item } from "../types";
 import ItemTable from "../components/ItemTable";
 import InsightBar from "../components/InsightBar";
@@ -30,6 +31,15 @@ export default function List() {
     user?.id || null
   );
   const { findUserIdByUsername } = useProfile(null);
+
+  // Get item IDs for reactions hook - only fetch reactions if wishlist is shared
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+  const isShared = accountShares.length > 0;
+  const { reactions, scores, toggleReaction } = useItemReactions(
+    isShared ? activeWishlistId : null,
+    user?.id || null,
+    itemIds
+  );
 
   const loading = itemsLoading || sharesLoading;
 
@@ -340,6 +350,10 @@ export default function List() {
             items={sortedItems}
             onDelete={handleDelete}
             onUpdate={handleUpdate}
+            showReactions={isShared}
+            userReactions={reactions}
+            itemScores={scores}
+            onToggleReaction={toggleReaction}
           />
         )}
       </div>
