@@ -148,15 +148,9 @@ The extension:
 - ✅ Doesn't send any data to third parties
 - ✅ All data goes directly to your Closet Compare app
 
-## License
-
-[Your license here]
-
 ## Support
 
 If you run into issues or have questions, feel free to open an issue on GitHub or reach out!
 
 ---
-
-**Made with ❤️ for keeping track of all the clothes you want to buy**
 
