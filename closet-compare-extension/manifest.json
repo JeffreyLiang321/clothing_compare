@@ -3,9 +3,19 @@
     "name": "Closet Compare Saver",
     "version": "0.2.0",
     "description": "Save clothing items to Closet Compare in one click.",
-    "action": { "default_title": "Save to Closet Compare" },
+    "icons": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "action": {
+      "default_title": "Save to Closet Compare",
+      "default_icon": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png"
+      }
+    },
     "permissions": ["activeTab", "tabs", "scripting", "storage"],
     "background": { "service_worker": "background.js" },
     "options_page": "options.html"
   }
-  

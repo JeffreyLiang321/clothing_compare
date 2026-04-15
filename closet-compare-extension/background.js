@@ -1,12 +1,17 @@
-const APP_ORIGIN = "http://localhost:5173";
-
 async function getAppOrigin() {
     const { appOrigin } = await chrome.storage.sync.get(["appOrigin"]);
-    return (appOrigin && String(appOrigin).trim()) || APP_ORIGIN;
+    return (appOrigin && String(appOrigin).trim()) || "";
 }
-  
+
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;
+
+  const appOrigin = await getAppOrigin();
+  if (!appOrigin) {
+    // Not configured yet — open the options page so the user can set the app URL
+    chrome.runtime.openOptionsPage();
+    return;
+  }
 
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId: tab.id },
@@ -65,7 +70,6 @@ chrome.action.onClicked.addListener(async (tab) => {
 
   if (data.image) params.set("image_url", data.image);
 
-  const appOrigin = await getAppOrigin()
   const addUrl = `${appOrigin.replace(/\/$/, "")}/add?${params.toString()}`;
   chrome.tabs.create({ url: addUrl });
 });

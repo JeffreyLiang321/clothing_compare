@@ -31,7 +31,13 @@ export default function Auth() {
       const checkAndRedirect = async () => {
         if (session.user) {
           const complete = await isSetupComplete(session.user.id);
-          navigate(complete ? "/" : "/finish-setup", { replace: true });
+          if (complete) {
+            const redirect = sessionStorage.getItem("postAuthRedirect");
+            sessionStorage.removeItem("postAuthRedirect");
+            navigate(redirect || "/", { replace: true });
+          } else {
+            navigate("/finish-setup", { replace: true });
+          }
         }
       };
       checkAndRedirect();
@@ -122,7 +128,13 @@ export default function Auth() {
     // Check if setup is complete
     if (data.user) {
       const complete = await isSetupComplete(data.user.id);
-      navigate(complete ? "/" : "/finish-setup", { replace: true });
+      if (complete) {
+        const redirect = sessionStorage.getItem("postAuthRedirect");
+        sessionStorage.removeItem("postAuthRedirect");
+        navigate(redirect || "/", { replace: true });
+      } else {
+        navigate("/finish-setup", { replace: true });
+      }
     }
   };
 
@@ -230,8 +242,9 @@ export default function Auth() {
   };
 
   return (
-    <div className="panel">
-      <div className="panel-body" style={{ maxWidth: 400, margin: "0 auto" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 0" }}>
+    <div className="panel" style={{ width: "100%", maxWidth: 440 }}>
+      <div className="panel-body">
         <h1>
           {forgotPasswordMode ? "Reset Password" : mode === "login" ? "Sign In" : "Sign Up"}
         </h1>
@@ -296,6 +309,7 @@ export default function Auth() {
               placeholder={mode === "login" ? "your@email.com or username" : "your@email.com"}
               required
               disabled={loading}
+              autoComplete="on"
             />
           </div>
 
@@ -337,6 +351,7 @@ export default function Auth() {
                 placeholder="Password"
                 required
                 disabled={loading}
+                autoComplete="off"
               />
             </div>
           )}
@@ -440,6 +455,7 @@ export default function Auth() {
           </div>
         </form>
       </div>
+    </div>
     </div>
   );
 }

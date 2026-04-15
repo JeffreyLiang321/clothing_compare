@@ -35,7 +35,13 @@ export default function AuthCallback() {
       // Check if setup is complete
       if (data.user) {
         const complete = await isSetupComplete(data.user.id);
-        navigate(complete ? "/" : "/finish-setup", { replace: true });
+        if (complete) {
+          const redirect = sessionStorage.getItem("postAuthRedirect");
+          sessionStorage.removeItem("postAuthRedirect");
+          navigate(redirect || "/", { replace: true });
+        } else {
+          navigate("/finish-setup", { replace: true });
+        }
       } else {
         navigate("/", { replace: true });
       }

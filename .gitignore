@@ -1,0 +1,10 @@
+# Python virtual environments
+clothing/
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+
+# OS
+.DS_Store

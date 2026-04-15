@@ -12,7 +12,11 @@ function normalizeOrigin(v) {
 
 async function load() {
   const { appOrigin } = await chrome.storage.sync.get(["appOrigin"]);
-  originInput.value = appOrigin || "http://localhost:5173";
+  originInput.value = appOrigin || "";
+  if (!appOrigin) {
+    statusEl.textContent = "Please enter your Closet Compare app URL to get started.";
+    statusEl.style.color = "#6b7280";
+  }
 }
 
 async function save() {

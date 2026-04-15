@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, NavLink, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { supabase } from "./lib/supabase";
 import { ActiveWishlistProvider } from "./contexts/ActiveWishlistContext";
@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading, user } = useAuth();
+  const location = useLocation();
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [setupComplete, setSetupComplete] = useState(false);
 
@@ -47,6 +48,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
+    const target = location.pathname + location.search;
+    if (target !== "/") {
+      sessionStorage.setItem("postAuthRedirect", target);
+    }
     return <Navigate to="/auth" replace />;
   }
 

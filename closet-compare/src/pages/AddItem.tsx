@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useItems } from "../hooks/useItems";
 import { useActiveWishlist } from "../contexts/ActiveWishlistContext";
@@ -38,6 +38,7 @@ export default function AddItem() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedWishlistId, setSavedWishlistId] = useState<string | null>(null);
   const hasPrefilledRef = useRef(false);
 
   // Prefill form from URL query params (only once on mount)
@@ -79,6 +80,7 @@ export default function AddItem() {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+    setSavedWishlistId(null);
 
     const tagsArray = form.tags
       .split(",")
@@ -134,6 +136,7 @@ export default function AddItem() {
         wishlist_id: activeWishlistId,
       });
 
+      setSavedWishlistId(activeWishlistId);
       setForm({
         url: "",
         store: "",
@@ -166,6 +169,7 @@ export default function AddItem() {
       image_url: "",
     });
     setError(null);
+    setSavedWishlistId(null);
   };
 
   return (
@@ -194,6 +198,31 @@ export default function AddItem() {
         </div>
 
         {error && <div className="toast">{error}</div>}
+
+        {savedWishlistId && (
+          <div
+            style={{
+              padding: "12px 16px",
+              background: "#d1fae5",
+              color: "#065f46",
+              borderRadius: 8,
+              marginBottom: 24,
+              fontSize: 14,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>Item saved!</span>
+            <Link
+              to="/"
+              style={{ color: "#065f46", fontWeight: 600, textDecoration: "underline" }}
+              onClick={() => setSavedWishlistId(null)}
+            >
+              View wishlist →
+            </Link>
+          </div>
+        )}
 
         {activeWishlistId ? (
           <ItemForm

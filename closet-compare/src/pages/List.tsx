@@ -282,7 +282,7 @@ export default function List() {
 
         <InsightBar items={items} />
 
-        <div style={{ marginBottom: 24, display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div style={{ marginBottom: 24, display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
             <label className="label" style={{ marginBottom: 8, display: "block" }}>
               Filter
@@ -319,7 +319,7 @@ export default function List() {
             </div>
           </div>
           <div>
-            <label className="label" htmlFor="sort">
+            <label className="label" style={{ marginBottom: 8, display: "block" }} htmlFor="sort">
               Sort by
             </label>
             <select
@@ -327,7 +327,7 @@ export default function List() {
               className="select"
               value={sort}
               onChange={(e) => setSort(e.target.value as any)}
-              style={{ maxWidth: 200 }}
+              style={{ maxWidth: 200, fontSize: 14, padding: "8px 36px 8px 16px", borderRadius: 20, fontWeight: 500 }}
             >
               <option value="newest">Newest</option>
               <option value="price-asc">Price: Low → High</option>

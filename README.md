@@ -186,14 +186,36 @@ closet-compare-extension/
 
 ## Chrome Extension
 
-See the [extension README](../closet-compare-extension/README.md) for installation and usage instructions.
+### Installation
+
+1. Open Chrome and go to `chrome://extensions`
+2. Enable **Developer mode** (toggle in top-right corner)
+3. Click **Load unpacked** and select the `closet-compare-extension/` folder
+4. The extension icon will appear in your Chrome toolbar
+
+### First-time setup
+
+1. Right-click the extension icon → **Options** (or click the puzzle piece → Manage extensions → Extension options)
+2. Enter your Closet Compare app URL:
+   - **Production:** your Vercel deployment URL (e.g. `https://closet-compare.vercel.app`)
+   - **Local dev:** `http://localhost:5173`
+3. Click **Save**
+
+### Usage
+
+1. Browse any product or clothing page
+2. Click the **Closet Compare Saver** icon in your toolbar
+3. A new tab opens with the item details pre-filled (title, URL, price, image)
+4. Select a wishlist, review the details, and click **Add Item**
+
+> **Note:** You must be signed in to Closet Compare for items to save. If you're not signed in, you'll be redirected to the login page — sign in and you'll land back on the pre-filled form automatically.
 
 The extension automatically extracts:
 - Product URL
-- Item name
-- Store name
-- Price
-- Product image
+- Item name (from page title or Open Graph tags)
+- Store name (from hostname)
+- Price (from meta tags or page text)
+- Product image (from Open Graph tags)
 
 ## Environment Variables
 
