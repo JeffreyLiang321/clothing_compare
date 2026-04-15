@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Closet Compare</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 720px; margin: 60px auto; padding: 0 24px 80px; color: #1a1a1a; line-height: 1.8; }
+    h1 { font-size: 30px; font-weight: 700; margin-bottom: 4px; }
+    h2 { font-size: 19px; font-weight: 600; margin-top: 44px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+    h3 { font-size: 15px; font-weight: 600; margin-top: 20px; margin-bottom: 6px; color: #111827; }
+    p, li { font-size: 15px; color: #374151; }
+    ul { padding-left: 22px; margin: 8px 0; }
+    li { margin-bottom: 4px; }
+    .muted { font-size: 13px; color: #6b7280; margin-bottom: 40px; display: block; }
+    a { color: #1a1a1a; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
+    th { text-align: left; padding: 10px 12px; background: #f9fafb; font-weight: 600; border: 1px solid #e5e7eb; color: #111827; }
+    td { padding: 10px 12px; border: 1px solid #e5e7eb; color: #374151; vertical-align: top; }
+    .notice { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 14px 18px; margin: 20px 0; font-size: 14px; color: #0c4a6e; }
+  </style>
+</head>
+<body>
+
+  <h1>Privacy Policy</h1>
+  <span class="muted">Last updated: April 15, 2025 &nbsp;·&nbsp; Effective date: April 15, 2025</span>
+
+  <p>This Privacy Policy describes how Closet Compare ("we," "us," or "our") collects, uses, stores, and shares information when you use the Closet Compare web application ("App") and the Closet Compare Saver Chrome extension ("Extension"), collectively referred to as the "Service."</p>
+  <p>By using the Service, you agree to the collection and use of information in accordance with this policy. If you do not agree, please discontinue use of the Service.</p>
+
+  <div class="notice">
+    <strong>Summary:</strong> We collect only what is necessary to run the Service. We do not sell your data. We do not advertise to you. The Chrome extension only reads page data when you explicitly click it — it never runs silently in the background.
+  </div>
+
+  <h2>1. Who We Are</h2>
+  <p>Closet Compare is a personal project operated by Jeffrey Liang. For questions about this policy, contact: <a href="mailto:jeffrey_liang@brown.edu">jeffrey_liang@brown.edu</a>.</p>
+
+  <h2>2. Information We Collect</h2>
+
+  <h3>2.1 Information you provide directly</h3>
+  <ul>
+    <li><strong>Email address</strong> — used to create and authenticate your account.</li>
+    <li><strong>Username</strong> — a unique handle you choose during onboarding, used to identify you to other users when sharing wishlists.</li>
+    <li><strong>Password</strong> — stored as a salted hash by Supabase Auth; we never have access to your plaintext password.</li>
+    <li><strong>Wishlist and item data</strong> — product names, URLs, prices, images, notes, tags, and status that you choose to save.</li>
+  </ul>
+
+  <h3>2.2 Information collected automatically</h3>
+  <ul>
+    <li><strong>Authentication tokens</strong> — session tokens issued by Supabase Auth, stored in your browser's localStorage to keep you signed in.</li>
+    <li><strong>Usage data</strong> — Supabase and Vercel may log standard server-side access logs (IP address, request timestamps, HTTP method, response codes) as part of their infrastructure. We do not access or store these logs ourselves.</li>
+  </ul>
+
+  <h3>2.3 Information collected by the Chrome Extension</h3>
+  <p>The Extension reads the following data from the active browser tab <strong>only when you click the extension icon</strong>. This data is never stored by the extension, never sent to our servers directly, and never transmitted to any third party:</p>
+  <ul>
+    <li>The page URL</li>
+    <li>The page title and Open Graph / Twitter Card meta tags (product name, image URL)</li>
+    <li>Visible price text scanned from the page body</li>
+    <li>The website hostname (to infer the store name)</li>
+  </ul>
+  <p>This data is passed as URL parameters to the Closet Compare App in a new tab, where you review and optionally save it. The Extension itself stores only one item in Chrome sync storage: your configured app URL (e.g., your Vercel deployment URL).</p>
+
+  <h3>2.4 Information we do NOT collect</h3>
+  <ul>
+    <li>Browsing history or background tab monitoring</li>
+    <li>Precise geolocation</li>
+    <li>Device identifiers or fingerprinting data</li>
+    <li>Payment or financial information</li>
+    <li>Health information</li>
+    <li>Communications (emails, messages)</li>
+    <li>Any data from minors under 13 (see Section 9)</li>
+  </ul>
+
+  <h2>3. How We Use Your Information</h2>
+  <table>
+    <tr>
+      <th>Purpose</th>
+      <th>Data used</th>
+      <th>Legal basis (GDPR)</th>
+    </tr>
+    <tr>
+      <td>Create and manage your account</td>
+      <td>Email, password, username</td>
+      <td>Contract performance</td>
+    </tr>
+    <tr>
+      <td>Authenticate you on return visits</td>
+      <td>Email, session token</td>
+      <td>Contract performance</td>
+    </tr>
+    <tr>
+      <td>Store and display your wishlists</td>
+      <td>Wishlist and item data</td>
+      <td>Contract performance</td>
+    </tr>
+    <tr>
+      <td>Enable wishlist sharing by username</td>
+      <td>Username, wishlist data</td>
+      <td>Contract performance / consent</td>
+    </tr>
+    <tr>
+      <td>Pre-fill the Add Item form via the Extension</td>
+      <td>Page metadata (client-side only)</td>
+      <td>Legitimate interest</td>
+    </tr>
+    <tr>
+      <td>Respond to support or privacy requests</td>
+      <td>Email</td>
+      <td>Legitimate interest</td>
+    </tr>
+  </table>
+  <p>We do not use your data for advertising, profiling, or any purpose beyond operating the Service.</p>
+
+  <h2>4. Cookies and Local Storage</h2>
+  <p>The Service uses browser <strong>localStorage</strong> to store your Supabase authentication session token. This is required to keep you signed in across page refreshes and is not used for tracking or advertising.</p>
+  <p>The Chrome Extension uses <strong>Chrome sync storage</strong> solely to store your configured app URL.</p>
+  <p>We do not use advertising cookies, analytics cookies, or any third-party tracking cookies.</p>
+
+  <h2>5. Third-Party Services</h2>
+  <p>We rely on the following third-party services to operate the Service. Each has its own privacy policy:</p>
+  <table>
+    <tr>
+      <th>Service</th>
+      <th>Purpose</th>
+      <th>Data shared</th>
+      <th>Privacy policy</th>
+    </tr>
+    <tr>
+      <td>Supabase</td>
+      <td>Database hosting and authentication</td>
+      <td>Email, username, wishlist data, session tokens</td>
+      <td><a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a></td>
+    </tr>
+    <tr>
+      <td>Vercel</td>
+      <td>Web app hosting and deployment</td>
+      <td>Standard HTTP access logs (IP, timestamps)</td>
+      <td><a href="https://vercel.com/legal/privacy-policy" target="_blank">vercel.com/legal/privacy-policy</a></td>
+    </tr>
+    <tr>
+      <td>Google OAuth (optional)</td>
+      <td>Sign in with Google</td>
+      <td>Email address and Google profile (if you choose Google sign-in)</td>
+      <td><a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></td>
+    </tr>
+  </table>
+  <p>We do not sell, rent, or trade your personal information to any other third parties.</p>
+
+  <h2>6. Data Retention</h2>
+  <ul>
+    <li><strong>Account data</strong> (email, username, wishlists, items) is retained for as long as your account is active.</li>
+    <li>If you request account deletion, all personally identifiable data associated with your account will be deleted within 30 days.</li>
+    <li><strong>Extension storage</strong> (configured app URL) is stored locally in your browser and is deleted when you uninstall the extension or clear it manually via the Options page.</li>
+    <li>Server access logs retained by Supabase and Vercel are subject to their respective data retention policies.</li>
+  </ul>
+
+  <h2>7. Data Security</h2>
+  <ul>
+    <li>All data in transit is encrypted via HTTPS/TLS.</li>
+    <li>Passwords are hashed using bcrypt by Supabase Auth — we never store or have access to plaintext passwords.</li>
+    <li>Database access is protected by Row-Level Security (RLS) policies, meaning each user can only read and write their own data.</li>
+    <li>Authentication uses industry-standard JWT tokens with expiry and refresh mechanisms.</li>
+  </ul>
+  <p>While we implement these safeguards, no method of electronic storage or transmission is 100% secure. In the event of a data breach that affects your personal information, we will notify affected users by email within a reasonable timeframe as required by applicable law.</p>
+
+  <h2>8. Your Rights</h2>
+  <p>Depending on your location, you may have the following rights regarding your personal data:</p>
+
+  <h3>All users</h3>
+  <ul>
+    <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
+    <li><strong>Correction:</strong> Update your username or email via the Settings page.</li>
+    <li><strong>Deletion:</strong> Request deletion of your account and all associated data by emailing <a href="mailto:jeffrey_liang@brown.edu">jeffrey_liang@brown.edu</a>.</li>
+  </ul>
+
+  <h3>EU / EEA residents (GDPR)</h3>
+  <ul>
+    <li><strong>Right to portability:</strong> Request your data in a machine-readable format.</li>
+    <li><strong>Right to restriction:</strong> Request that we limit processing of your data in certain circumstances.</li>
+    <li><strong>Right to object:</strong> Object to processing based on legitimate interests.</li>
+    <li><strong>Right to withdraw consent:</strong> Where processing is based on consent, you may withdraw it at any time.</li>
+    <li>You also have the right to lodge a complaint with your local data protection authority.</li>
+  </ul>
+
+  <h3>California residents (CCPA)</h3>
+  <ul>
+    <li><strong>Right to know:</strong> Request disclosure of the categories and specific pieces of personal information collected.</li>
+    <li><strong>Right to delete:</strong> Request deletion of your personal information.</li>
+    <li><strong>Right to opt out of sale:</strong> We do not sell personal information.</li>
+    <li><strong>Right to non-discrimination:</strong> We will not discriminate against you for exercising your privacy rights.</li>
+  </ul>
+
+  <p>To exercise any of these rights, contact us at <a href="mailto:jeffrey_liang@brown.edu">jeffrey_liang@brown.edu</a>. We will respond within 30 days.</p>
+
+  <h2>9. Children's Privacy</h2>
+  <p>The Service is not directed to children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at <a href="mailto:jeffrey_liang@brown.edu">jeffrey_liang@brown.edu</a> and we will delete that information promptly.</p>
+  <p>If you are between the ages of 13 and 18, please review this policy with a parent or guardian before using the Service.</p>
+
+  <h2>10. International Data Transfers</h2>
+  <p>Closet Compare is operated from the United States. Supabase and Vercel may store and process data in the United States or other countries. If you are accessing the Service from the EU, EEA, or other regions with data protection laws, please be aware that your data may be transferred to and processed in countries that may not have equivalent data protection laws.</p>
+  <p>By using the Service, you consent to this transfer. Supabase complies with applicable data transfer mechanisms including Standard Contractual Clauses where required.</p>
+
+  <h2>11. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date at the top of this page. For material changes, we will make reasonable efforts to notify registered users by email.</p>
+  <p>Your continued use of the Service after any changes constitutes your acceptance of the updated policy. We encourage you to review this policy periodically.</p>
+
+  <h2>12. Contact</h2>
+  <p>If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact:</p>
+  <p>
+    <strong>Jeffrey Liang</strong><br />
+    Closet Compare<br />
+    <a href="mailto:jeffrey_liang@brown.edu">jeffrey_liang@brown.edu</a>
+  </p>
+
+</body>
+</html>
