@@ -1,6 +1,6 @@
 # Closet Compare
 
-Hey there, this is a personal wishlist tracker for clothing items you're considering buying. Stop losing track of that perfect jacket you saw last week — save everything in one place, organize it, share it with friends, and get their feedback.
+This is a personal wishlist tracker for clothing items you're considering buying. Stop losing track of that perfect jacket you saw last week — save everything in one place, organize it, share it with friends, and get their feedback.
 
 ## What is this?
 
