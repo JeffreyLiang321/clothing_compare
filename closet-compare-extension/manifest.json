@@ -15,7 +15,7 @@
         "48": "icons/icon48.png"
       }
     },
-    "permissions": ["activeTab", "tabs", "scripting", "storage"],
+    "permissions": ["activeTab", "scripting", "storage"],
     "background": { "service_worker": "background.js" },
     "options_page": "options.html"
   }
