@@ -10,10 +10,10 @@ Closet Compare is a web app I built to solve a simple problem: I was constantly 
 
 ## Features
 
-### 📦 Multiple Wishlists
+### Multiple Wishlists
 Create different carts for different purposes — "Winter Clothes", "Summer Wardrobe", "Gift Ideas", etc. Switch between them easily.
 
-### 🏷️ Rich Item Tracking
+### Rich Item Tracking
 For each item, track:
 - **Store** — Where it's from (Uniqlo, Zara, etc.)
 - **Name** — Product name
@@ -24,26 +24,26 @@ For each item, track:
 - **Status** — Considering, Bought, or Dropped
 - **Decision reason** — Why you bought or dropped it
 
-### 📊 Insights Dashboard
+### Insights Dashboard
 See helpful stats about your wishlist:
 - Most saved store
 - Median price across all items
 - Top tags
 - Status breakdown
 
-### 👥 Sharing & Collaboration
+### Sharing & Collaboration
 - **Share wishlists** with friends by username
 - **Get feedback** — Recipients can like/dislike items
 - **See aggregate scores** — View how many people liked/disliked each item
 - **Owners see all reactions** — Full visibility into what people think
 
-### 🔍 Filter & Sort
+### Filter & Sort
 - Filter by status (All, Considering, Bought, Dropped)
 - Sort by newest, price (low to high, high to low)
 - Search and organize easily
 
-### 🚀 Chrome Extension
-Install the [Chrome extension](../closet-compare-extension/) to save items with one click. It automatically extracts product info from any clothing website.
+### Chrome Extension
+Install the [Chrome extension](https://github.com/JeffreyLiang321/clothing_compare/tree/main/closet-compare-extension) to save items with one click. Automatically extracts product information from clothing websites. *(Currently under Chrome Web Store review)*
 
 ## Tech Stack
 
