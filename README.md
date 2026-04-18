@@ -2,6 +2,9 @@
 
 This is a personal wishlist tracker for clothing items you're considering buying. Stop losing track of that perfect jacket you saw last week — save everything in one place, organize it, share it with friends, and get their feedback.
 
+### Chrome Extension
+Install the [Chrome extension](http://chromewebstore.google.com/detail/closet-compare-saver/jioknkicbpggolfbnadedjgjjpkndpcc) to save items with one click. Automatically extracts product information from clothing websites.
+
 ## What is this?
 
 Closet Compare is a web app I built to solve a simple problem: I was constantly finding clothes I wanted to buy but forgetting about them later. Instead of having a million browser tabs open or losing links in bookmarks, I wanted one place to track everything.
@@ -41,9 +44,6 @@ See helpful stats about your wishlist:
 - Filter by status (All, Considering, Bought, Dropped)
 - Sort by newest, price (low to high, high to low)
 - Search and organize easily
-
-### Chrome Extension
-Install the [Chrome extension](http://chromewebstore.google.com/detail/closet-compare-saver/jioknkicbpggolfbnadedjgjjpkndpcc) to save items with one click. Automatically extracts product information from clothing websites.
 
 ## Tech Stack
 
