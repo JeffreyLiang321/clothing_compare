@@ -43,7 +43,7 @@ See helpful stats about your wishlist:
 - Search and organize easily
 
 ### Chrome Extension
-Install the [Chrome extension](https://github.com/JeffreyLiang321/clothing_compare/tree/main/closet-compare-extension) to save items with one click. Automatically extracts product information from clothing websites. *(Currently under Chrome Web Store review)*
+Install the [Chrome extension](http://chromewebstore.google.com/detail/closet-compare-saver/jioknkicbpggolfbnadedjgjjpkndpcc) to save items with one click. Automatically extracts product information from clothing websites.
 
 ## Tech Stack
 
